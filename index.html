@@ -141,6 +141,16 @@
 }
 </script>
 
+<!-- ═══ FAVICONS ═══ -->
+<link rel="icon" type="image/x-icon" href="favicons/favicon.ico">
+<link rel="icon" type="image/svg+xml" href="favicons/favicon.svg">
+<link rel="icon" type="image/png" sizes="16x16" href="favicons/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="favicons/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="96x96" href="favicons/favicon-96x96.png">
+<link rel="apple-touch-icon" sizes="180x180" href="favicons/apple-touch-icon.png">
+<link rel="manifest" href="favicons/site.webmanifest">
+<meta name="theme-color" content="#FF5500">
+
 <!-- ═══ PRECONNECT pro rychlost ═══ -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -181,6 +191,31 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;height:56px;display:flex;ali
 .bo:hover{background:var(--orange2)}
 .nav-av{width:29px;height:29px;border-radius:var(--r2);background:var(--odim);border:1px solid var(--obrd);display:grid;place-items:center;font-family:var(--mono);font-size:11px;color:var(--orange);cursor:pointer}
 .nav-em{font-size:12px;color:var(--g2);font-family:var(--mono);max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* HAMBURGER */
+.hamburger{display:none;flex-direction:column;gap:5px;cursor:pointer;padding:4px;background:none;border:none}
+.hamburger span{display:block;width:22px;height:2px;background:var(--g1);border-radius:2px;transition:all .25s}
+.hamburger.open span:nth-child(1){transform:translateY(7px) rotate(45deg)}
+.hamburger.open span:nth-child(2){opacity:0}
+.hamburger.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
+/* MOBILE NAV DRAWER */
+.mobile-nav{display:none;position:fixed;top:56px;left:0;right:0;background:rgba(8,8,8,.98);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);z-index:199;padding:16px 4% 20px;flex-direction:column;gap:4px;animation:fi .2s ease}
+.mobile-nav.open{display:flex}
+.mobile-nav a{font-size:15px;font-weight:500;color:var(--g1);cursor:pointer;padding:11px 0;border-bottom:1px solid var(--border);transition:color var(--tr)}
+.mobile-nav a:last-child{border-bottom:none}
+.mobile-nav a:hover{color:var(--white)}
+.mobile-nav .mob-auth{display:flex;gap:8px;margin-top:12px}
+.mobile-nav .mob-auth button{flex:1}
+/* SKELETON LOADER */
+.skeleton{background:linear-gradient(90deg,var(--bg2) 25%,var(--bg3) 50%,var(--bg2) 75%);background-size:200% 100%;animation:shimmer 1.4s infinite;border-radius:var(--r2)}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.skel-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r3);overflow:hidden;padding:20px}
+.skel-line{height:12px;margin-bottom:10px}
+.skel-big{height:38px;margin-bottom:8px;width:60%}
+.skel-sm{height:10px;width:40%}
+/* ERROR BANNER */
+.err-banner{background:var(--rdim);border:1px solid var(--rbrd);border-radius:var(--r2);padding:14px 16px;font-size:13px;color:var(--red);display:flex;align-items:center;gap:10px;margin-bottom:16px}
+.err-banner button{background:none;border:1px solid var(--rbrd);color:var(--red);border-radius:var(--r2);padding:4px 10px;font-size:11px;cursor:pointer;font-family:var(--mono);margin-left:auto;flex-shrink:0}
+.err-banner button:hover{background:var(--rdim)}
 /* PAGES */
 .page{padding-top:56px;min-height:100vh;animation:fi .2s ease}
 @keyframes fi{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
@@ -252,7 +287,8 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;height:56px;display:flex;ali
 .lcard-logo-placeholder{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;font-size:14px;flex-shrink:0}
 .lcard-pname{font-size:12px;font-weight:600;color:var(--white);letter-spacing:-.01em}
 .lcard-verified{display:flex;align-items:center;gap:4px;font-family:var(--mono);font-size:10px;color:var(--green);background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.2);padding:3px 8px;border-radius:20px}
-.lcf{font-family:var(--mono);font-size:38px;font-weight:400;color:var(--white);line-height:1;margin-bottom:3px;letter-spacing:-.03em}
+.lcf{font-family:var(--mono);font-size:48px;font-weight:300;color:var(--white);line-height:1;margin-bottom:2px;letter-spacing:-.03em}
+.lcf-label{font-family:var(--mono);font-size:10px;color:var(--g2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px}
 .lcn{font-size:11px;color:var(--g2);margin-bottom:16px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.04em}
 /* MINI CHART */
 .lcard-chart{margin-bottom:16px}
@@ -379,15 +415,40 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;height:56px;display:flex;ali
 @keyframes ticker{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
 .tki{display:inline-flex;align-items:center;gap:9px;padding:0 40px;font-family:var(--mono);font-size:12px;color:var(--g2);white-space:nowrap;border-right:1px solid var(--border)}
 .tkp{color:var(--orange);font-weight:500}
-/* FILTER BAR */
-.fbar{display:flex;gap:5px;flex-wrap:wrap;align-items:center;padding:16px 0;border-bottom:1px solid var(--border)}
-.fchip{font-family:var(--mono);font-size:10px;font-weight:500;padding:5px 12px;border-radius:20px;border:1px solid var(--border2);background:transparent;color:var(--g2);cursor:pointer;transition:all var(--tr);text-transform:uppercase;letter-spacing:.05em}
-.fchip:hover{color:var(--white);border-color:var(--border3)}
-.fchip.on{background:var(--orange);color:#fff;border-color:var(--orange)}
-.sinput{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);padding:6px 12px;font-size:13px;color:var(--white);font-family:var(--sans);outline:none;transition:border-color var(--tr);min-width:180px;flex:1;max-width:260px}
-.sinput:focus{border-color:var(--orange)}
+/* FILTER BAR — modern */
+.fbar-wrap{padding:20px 0 0}
+.fbar-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;flex-wrap:wrap}
+.fbar-label{font-family:var(--mono);font-size:10px;color:var(--g2);text-transform:uppercase;letter-spacing:.08em}
+.fbar-search{position:relative;flex:1;min-width:200px;max-width:320px}
+.fbar-search-icon{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--g2);font-size:14px;pointer-events:none}
+.sinput{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r3);padding:9px 12px 9px 34px;font-size:13px;color:var(--white);font-family:var(--sans);outline:none;transition:border-color var(--tr),box-shadow var(--tr);width:100%}
+.sinput:focus{border-color:var(--orange);box-shadow:0 0 0 3px rgba(255,85,0,.08)}
 .sinput::placeholder{color:var(--g3)}
-.srt{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);padding:6px 11px;font-size:12px;color:var(--g1);font-family:var(--mono);outline:none;cursor:pointer}
+/* PLATFORM CHIPS */
+.fbar-chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.fchip{display:inline-flex;align-items:center;gap:5px;font-family:var(--mono);font-size:11px;font-weight:500;padding:6px 13px;border-radius:20px;border:1px solid var(--border2);background:transparent;color:var(--g2);cursor:pointer;transition:all .15s;white-space:nowrap}
+.fchip:hover{color:var(--white);border-color:var(--border3);background:var(--bg3)}
+.fchip.on{background:var(--orange);color:#fff;border-color:var(--orange);box-shadow:0 2px 12px rgba(255,85,0,.3)}
+.fchip-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+/* SORT & PRICE */
+.fbar-controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 0;border-top:1px solid var(--border)}
+.sort-pills{display:flex;gap:4px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:3px}
+.sort-pill{font-family:var(--mono);font-size:11px;font-weight:500;padding:5px 12px;border-radius:6px;border:none;background:transparent;color:var(--g2);cursor:pointer;transition:all .15s;white-space:nowrap}
+.sort-pill:hover{color:var(--white);background:var(--bg3)}
+.sort-pill.on{background:var(--bg4);color:var(--white);border:1px solid var(--border2)}
+/* PRICE RANGE */
+.price-range-wrap{display:flex;align-items:center;gap:10px;margin-left:auto}
+.price-range-label{font-family:var(--mono);font-size:10px;color:var(--g2);white-space:nowrap}
+.price-range-val{font-family:var(--mono);font-size:11px;color:var(--orange);white-space:nowrap;min-width:100px;text-align:right}
+.price-slider{-webkit-appearance:none;appearance:none;width:120px;height:3px;border-radius:2px;background:var(--border2);outline:none;cursor:pointer}
+.price-slider::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--orange);cursor:pointer;border:2px solid var(--bg);box-shadow:0 2px 8px rgba(255,85,0,.4);transition:transform .15s}
+.price-slider::-webkit-slider-thumb:hover{transform:scale(1.2)}
+.price-slider::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:var(--orange);cursor:pointer;border:2px solid var(--bg)}
+/* ACTIVE FILTERS */
+.active-filters{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
+.active-tag{display:inline-flex;align-items:center;gap:5px;font-family:var(--mono);font-size:10px;color:var(--orange);background:var(--odim);border:1px solid var(--obrd);padding:3px 9px;border-radius:20px}
+.active-tag button{background:none;border:none;color:var(--orange);cursor:pointer;font-size:13px;padding:0;line-height:1;margin-left:2px}
+.filter-count{font-family:var(--mono);font-size:10px;color:var(--g2);margin-left:auto}
 /* AUTH */
 .awrap{max-width:390px;margin:0 auto;padding:64px 20px}
 .acard{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r3);padding:26px}
@@ -490,8 +551,24 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;height:56px;display:flex;ali
 .vop-list li{font-size:13px;color:var(--g1);line-height:1.75;padding:4px 0 4px 16px;position:relative}
 .vop-list li::before{content:"—";position:absolute;left:0;color:var(--orange);font-size:12px}
 .vop-divider{height:1px;background:var(--border);margin:32px 0}
-/* SPINNER */
-.spin{width:15px;height:15px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite}
+/* AVATAR UPLOAD */
+.avatar-upload{position:relative;width:80px;height:80px;cursor:pointer}
+.avatar-upload img,.avatar-upload .avatar-placeholder{width:80px;height:80px;border-radius:var(--r);object-fit:cover;display:block}
+.avatar-placeholder{background:var(--odim);border:1px solid var(--obrd);display:grid;place-items:center;font-family:var(--mono);font-size:22px;color:var(--orange)}
+.avatar-overlay{position:absolute;inset:0;background:rgba(0,0,0,.55);border-radius:var(--r);display:grid;place-items:center;opacity:0;transition:opacity .2s;font-size:20px}
+.avatar-upload:hover .avatar-overlay{opacity:1}
+/* REVIEWS */
+.review-card{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r2);padding:16px;margin-bottom:10px}
+.review-header{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.review-av{width:32px;height:32px;border-radius:50%;object-fit:cover;background:var(--bg4);border:1px solid var(--border);display:grid;place-items:center;font-family:var(--mono);font-size:11px;color:var(--g2);flex-shrink:0}
+.review-stars{display:flex;gap:2px;font-size:13px}
+.review-text{font-size:13px;color:var(--g1);line-height:1.65}
+.review-meta{font-family:var(--mono);font-size:10px;color:var(--g2);margin-top:6px}
+.stars-input{display:flex;gap:4px;margin-bottom:12px}
+.stars-input span{font-size:26px;cursor:pointer;opacity:.3;transition:opacity .15s}
+.stars-input span.on,.stars-input span:hover{opacity:1}
+/* RATING BADGE */
+.rating-badge{display:inline-flex;align-items:center;gap:4px;font-family:var(--mono);font-size:11px;color:var(--amber);background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.2);padding:3px 8px;border-radius:20px}width:15px;height:15px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 /* HOW */
 .how-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin-top:32px}
@@ -504,7 +581,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;height:56px;display:flex;ali
 /* DIVIDER */
 .div{height:1px;background:var(--border);margin:18px 0}
 /* RESPONSIVE */
-@media(max-width:720px){.chwrap{grid-template-columns:1fr}.sumcard{position:static}.nav-links{display:none}.frow{grid-template-columns:1fr}.admrow{grid-template-columns:1fr 1fr}.hero h1{font-size:34px}}
+@media(max-width:720px){.chwrap{grid-template-columns:1fr}.sumcard{position:static}.nav-links{display:none}.nav-r .bg,.nav-r .bo,.nav-em{display:none!important}.hamburger{display:flex}.frow{grid-template-columns:1fr}.admrow{grid-template-columns:1fr 1fr}.hero h1{font-size:34px}}
 @media(max-width:640px){#why-compare{grid-template-columns:1fr!important}}
 </style>
 </head>
@@ -520,7 +597,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;height:56px;display:flex;ali
   </div>
   <ul class="nav-links">
     <li><a onclick="go('home')" id="nl-home">Marketplace</a></li>
-    <li><a onclick="scrollHow()">Jak to funguje</a></li>
+    <li><a onclick="go('how')" id="nl-how">Jak to funguje</a></li>
     <li><a onclick="go('sell')">Prodat účet</a></li>
     <li><a onclick="go('vop')" style="display:inline-flex;align-items:center;gap:5px">
       <span style="width:6px;height:6px;border-radius:50%;background:var(--green);display:inline-block;flex-shrink:0"></span>
@@ -528,6 +605,9 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;height:56px;display:flex;ali
     </a></li>
   </ul>
   <div class="nav-r">
+    <button class="hamburger" id="hamburger" onclick="toggleMobileNav()" aria-label="Menu">
+      <span></span><span></span><span></span>
+    </button>
     <div id="nav-guest">
       <button class="bg" onclick="go('auth','login')" style="margin-right:6px">Přihlásit</button>
       <button class="bo" onclick="go('auth','register')">Registrace</button>
@@ -540,6 +620,22 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;height:56px;display:flex;ali
     </div>
   </div>
 </nav>
+
+<!-- MOBILE NAV DRAWER -->
+<div class="mobile-nav" id="mobile-nav">
+  <a onclick="closeMobileNav();go('home')">Marketplace</a>
+  <a onclick="closeMobileNav();go('how')">Jak to funguje</a>
+  <a onclick="closeMobileNav();go('sell')">Prodat účet</a>
+  <a onclick="closeMobileNav();go('vop')">Obchodní podmínky</a>
+  <div class="mob-auth" id="mob-auth-guest">
+    <button class="bg" onclick="closeMobileNav();go('auth','login')">Přihlásit</button>
+    <button class="bo" onclick="closeMobileNav();go('auth','register')">Registrace</button>
+  </div>
+  <div class="mob-auth h" id="mob-auth-user">
+    <button class="bg" style="flex:1" onclick="closeMobileNav();go('dashboard')">Dashboard</button>
+    <button class="bg" style="flex:1" onclick="closeMobileNav();signOut()">Odhlásit</button>
+  </div>
+</div>
 
 <!-- HOME -->
 <div class="page h" id="page-home">
@@ -558,7 +654,6 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;height:56px;display:flex;ali
       <div class="hero-inner">
         <!-- LEFT: TEXT -->
         <div>
-          <div class="heyebrow">🇨🇿 První český marketplace sociálních účtů</div>
           <h1>Kup profil.<br><em>Prodej profil.</em><br><span class="dim">Bezpečně.</span></h1>
           <p class="hsub">Propojujeme prodejce a kupce účtů TikTok, Instagram, Snapchat, Facebook a dalších. Escrow ochrana každé transakce.</p>
           <div class="hbtns">
@@ -569,7 +664,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;height:56px;display:flex;ali
             <div class="ti"><div class="tdot2"></div>Escrow ochrana</div>
             <div class="ti"><div class="tdot2"></div>Ověření prodejci</div>
             <div class="ti"><div class="tdot2"></div>Platba v CZK</div>
-            <div class="ti"><div class="tdot2"></div>Podpora 7 dní</div>
+
           </div>
         </div>
 
@@ -699,33 +794,77 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;height:56px;display:flex;ali
           <div style="font-family:var(--mono);font-size:11px;color:var(--g2);margin-top:3px" id="lcount">Načítám...</div>
         </div>
       </div>
-      <div class="fbar">
-        <button class="fchip on" onclick="setF('',this)">Vše</button>
-        <button class="fchip" onclick="setF('TikTok',this)">TikTok</button>
-        <button class="fchip" onclick="setF('Instagram',this)">Instagram</button>
-        <button class="fchip" onclick="setF('YouTube',this)">YouTube</button>
-        <button class="fchip" onclick="setF('Facebook',this)">Facebook</button>
-        <button class="fchip" onclick="setF('X (Twitter)',this)">X</button>
-        <button class="fchip" onclick="setF('LinkedIn',this)">LinkedIn</button>
-        <button class="fchip" onclick="setF('Snapchat',this)">Snapchat</button>
-        <button class="fchip" onclick="setF('Telegram',this)">Telegram</button>
-        <button class="fchip" onclick="setF('Discord',this)">Discord</button>
-        <button class="fchip" onclick="setF('Pinterest',this)">Pinterest</button>
-        <button class="fchip" onclick="setF('Twitch',this)">Twitch</button>
-        <button class="fchip" onclick="setF('Threads',this)">Threads</button>
-        <input class="sinput" placeholder="Hledat niche..." id="search-in" oninput="filterL()">
-        <select class="srt" id="sort-in" onchange="filterL()">
-          <option value="new">Nejnovější</option>
-          <option value="asc">Cena ↑</option>
-          <option value="desc">Cena ↓</option>
-        </select>
+      <div class="fbar-wrap">
+        <!-- TOP ROW: search -->
+        <div class="fbar-top">
+          <div class="fbar-label">Filtrovat nabídky</div>
+          <div class="fbar-search">
+            <span class="fbar-search-icon">🔍</span>
+            <input class="sinput" placeholder="Hledat niche, téma..." id="search-in" oninput="filterL()">
+          </div>
+        </div>
+
+        <!-- PLATFORM CHIPS -->
+        <div class="fbar-chips">
+          <button class="fchip on" onclick="setF('',this)"><span class="fchip-dot" style="background:#FF5500"></span>Vše</button>
+          <button class="fchip" onclick="setF('TikTok',this)"><span class="fchip-dot" style="background:#69C9D0"></span>TikTok</button>
+          <button class="fchip" onclick="setF('Instagram',this)"><span class="fchip-dot" style="background:#E1306C"></span>Instagram</button>
+          <button class="fchip" onclick="setF('YouTube',this)"><span class="fchip-dot" style="background:#FF0000"></span>YouTube</button>
+          <button class="fchip" onclick="setF('Facebook',this)"><span class="fchip-dot" style="background:#1877F2"></span>Facebook</button>
+          <button class="fchip" onclick="setF('X (Twitter)',this)"><span class="fchip-dot" style="background:#1DA1F2"></span>X</button>
+          <button class="fchip" onclick="setF('LinkedIn',this)"><span class="fchip-dot" style="background:#0A66C2"></span>LinkedIn</button>
+          <button class="fchip" onclick="setF('Snapchat',this)"><span class="fchip-dot" style="background:#FFFC00"></span>Snapchat</button>
+          <button class="fchip" onclick="setF('Telegram',this)"><span class="fchip-dot" style="background:#2AABEE"></span>Telegram</button>
+          <button class="fchip" onclick="setF('Discord',this)"><span class="fchip-dot" style="background:#5865F2"></span>Discord</button>
+          <button class="fchip" onclick="setF('Pinterest',this)"><span class="fchip-dot" style="background:#E60023"></span>Pinterest</button>
+          <button class="fchip" onclick="setF('Twitch',this)"><span class="fchip-dot" style="background:#9147FF"></span>Twitch</button>
+          <button class="fchip" onclick="setF('Threads',this)"><span class="fchip-dot" style="background:#aaa"></span>Threads</button>
+        </div>
+
+        <!-- BOTTOM ROW: sort + price -->
+        <div class="fbar-controls">
+          <div style="font-family:var(--mono);font-size:10px;color:var(--g2);margin-right:4px">Seřadit:</div>
+          <div class="sort-pills">
+            <button class="sort-pill on" id="sp-new" onclick="setSort('new',this)">🕐 Nejnovější</button>
+            <button class="sort-pill" id="sp-asc" onclick="setSort('asc',this)">💰 Cena ↑</button>
+            <button class="sort-pill" id="sp-desc" onclick="setSort('desc',this)">💎 Cena ↓</button>
+            <button class="sort-pill" id="sp-eng" onclick="setSort('eng',this)">🔥 Engagement</button>
+          </div>
+          <div class="price-range-wrap">
+            <div class="price-range-label">Max cena:</div>
+            <input type="range" class="price-slider" id="price-slider" min="0" max="500000" step="5000" value="500000" oninput="onPriceSlider(this.value)">
+            <div class="price-range-val" id="price-slider-val">Bez omezení</div>
+          </div>
+        </div>
+
+        <!-- ACTIVE FILTERS -->
+        <div class="active-filters h" id="active-filters">
+          <div class="fbar-label">Aktivní filtry:</div>
+          <div id="active-tags"></div>
+          <button onclick="clearAllFilters()" style="font-family:var(--mono);font-size:10px;color:var(--g2);background:none;border:none;cursor:pointer;margin-left:auto;text-decoration:underline">Vymazat vše</button>
+        </div>
       </div>
       <div style="margin-top:18px"><div class="g4" id="pub-grid"></div></div>
     </div>
   </div>
 
-  <div id="how-section" style="background:var(--bg2);border-top:1px solid var(--border);border-bottom:1px solid var(--border)">
+  </article>
+  </main>
+</div>
+
+<!-- HOW IT WORKS PAGE -->
+<div class="page h" id="page-how">
+  <div style="padding:32px 4% 0;max-width:1200px;margin:0 auto">
+    <button onclick="go('home')" style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);padding:7px 14px;font-size:12px;color:var(--g1);cursor:pointer;font-family:var(--sans);margin-bottom:8px">← Zpět na marketplace</button>
+  </div><div id="how-section" style="background:var(--bg2);border-top:1px solid var(--border);border-bottom:1px solid var(--border)">
     <div class="wrap sec">
+
+      <!-- INTRO CENTERED -->
+      <div style="text-align:center;max-width:680px;margin:0 auto 56px">
+        <div style="font-family:var(--mono);font-size:11px;color:var(--orange);text-transform:uppercase;letter-spacing:.12em;margin-bottom:16px">Vítejte na UlovProfil</div>
+        <div style="font-size:clamp(28px,4vw,44px);font-weight:700;letter-spacing:-.02em;margin-bottom:20px;line-height:1.15">Jak to funguje?</div>
+        <div style="font-size:16px;color:var(--g1);line-height:1.8">UlovProfil je největší online platforma pro prodej a nákup sociálních sítí v Česku a na Slovensku. UlovProfil sám profily neprodává, ale dává všem lidem možnost bezpečně zpeněžit účty, které už nevyužijí, a naopak získat přesně takové publikum a dosahy, po kterých touží.</div>
+      </div>
 
       <!-- PROČ ULOVPROFIL -->
       <div style="font-family:var(--mono);font-size:10px;color:var(--orange);text-transform:uppercase;letter-spacing:.1em;margin-bottom:14px">Proč UlovProfil</div>
@@ -827,6 +966,40 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;height:56px;display:flex;ali
 
       <div style="height:1px;background:var(--border);margin-bottom:48px"></div>
 
+      <!-- TESTIMONIALS -->
+      <div style="margin-bottom:48px">
+        <div style="font-family:var(--mono);font-size:10px;color:var(--orange);text-transform:uppercase;letter-spacing:.1em;margin-bottom:11px">Co říkají uživatelé</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px">
+          <div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--r3);padding:22px;transition:border-color .18s" onmouseover="this.style.borderColor='var(--border3)'" onmouseout="this.style.borderColor='var(--border)'">
+            <div style="display:flex;gap:3px;margin-bottom:12px">⭐⭐⭐⭐⭐</div>
+            <div style="font-size:13px;color:var(--g1);line-height:1.7;margin-bottom:16px">"Prodal jsem Instagram účet za 35 000 Kč a celý proces byl naprosto hladký. Peníze přišly do 3 dnů. Konečně platforma v češtině!"</div>
+            <div style="display:flex;align-items:center;gap:10px">
+              <div style="width:32px;height:32px;border-radius:50%;background:var(--odim);border:1px solid var(--obrd);display:grid;place-items:center;font-family:var(--mono);font-size:12px;color:var(--orange);flex-shrink:0">MK</div>
+              <div><div style="font-size:12px;font-weight:600">Marek K.</div><div style="font-family:var(--mono);font-size:10px;color:var(--g2)">Prodejce · Instagram</div></div>
+            </div>
+          </div>
+          <div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--r3);padding:22px;transition:border-color .18s" onmouseover="this.style.borderColor='var(--border3)'" onmouseout="this.style.borderColor='var(--border)'">
+            <div style="display:flex;gap:3px;margin-bottom:12px">⭐⭐⭐⭐⭐</div>
+            <div style="font-size:13px;color:var(--g1);line-height:1.7;margin-bottom:16px">"Koupila jsem TikTok účet s 80k followery. Měla jsem obavy, ale escrow mě uklidnil. Přístupy jsem dostala za 3 hodiny. Super servis!"</div>
+            <div style="display:flex;align-items:center;gap:10px">
+              <div style="width:32px;height:32px;border-radius:50%;background:rgba(225,48,108,.1);border:1px solid rgba(225,48,108,.2);display:grid;place-items:center;font-family:var(--mono);font-size:12px;color:#E1306C;flex-shrink:0">LP</div>
+              <div><div style="font-size:12px;font-weight:600">Lucia P.</div><div style="font-family:var(--mono);font-size:10px;color:var(--g2)">Kupující · TikTok</div></div>
+            </div>
+          </div>
+          <div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--r3);padding:22px;transition:border-color .18s" onmouseover="this.style.borderColor='var(--border3)'" onmouseout="this.style.borderColor='var(--border)'">
+            <div style="display:flex;gap:3px;margin-bottom:12px">⭐⭐⭐⭐⭐</div>
+            <div style="font-size:13px;color:var(--g1);line-height:1.7;margin-bottom:16px">"Zkusil jsem to nejdřív přes Facebook skupinu a byl jsem podveden. Na UlovProfil jsem pak prodal YouTube kanál bez jediného problému."</div>
+            <div style="display:flex;align-items:center;gap:10px">
+              <div style="width:32px;height:32px;border-radius:50%;background:rgba(255,0,0,.1);border:1px solid rgba(255,0,0,.2);display:grid;place-items:center;font-family:var(--mono);font-size:12px;color:#ff4444;flex-shrink:0">TN</div>
+              <div><div style="font-size:12px;font-weight:600">Tomáš N.</div><div style="font-family:var(--mono);font-size:10px;color:var(--g2)">Prodejce · YouTube</div></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <div style="height:1px;background:var(--border);margin-bottom:48px"></div>
+
       <!-- JAK TO FUNGUJE -->
       <div style="font-family:var(--mono);font-size:10px;color:var(--orange);text-transform:uppercase;letter-spacing:.1em;margin-bottom:11px">Jak to funguje</div>
       <div style="font-size:clamp(22px,3.5vw,36px);font-weight:700;letter-spacing:-.02em">Čtyři kroky k bezpečnému obchodu</div>
@@ -839,7 +1012,9 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;height:56px;display:flex;ali
       <div style="margin-top:32px;padding-top:24px;border-top:1px solid var(--border);display:flex;gap:20px;flex-wrap:wrap">
         <a onclick="go('vop')" style="font-family:var(--mono);font-size:11px;color:var(--g2);cursor:pointer;transition:color .15s" onmouseover="this.style.color='var(--orange)'" onmouseout="this.style.color='var(--g2)'">Obchodní podmínky</a>
         <a onclick="go('vop')" style="font-family:var(--mono);font-size:11px;color:var(--g2);cursor:pointer;transition:color .15s" onmouseover="this.style.color='var(--orange)'" onmouseout="this.style.color='var(--g2)'">Ochrana soukromí</a>
+        <a href="mailto:info@ulovprofil.cz" style="font-family:var(--mono);font-size:11px;color:var(--g2);text-decoration:none;display:inline-flex;align-items:center;gap:5px;transition:color .15s" onmouseover="this.style.color='var(--orange)'" onmouseout="this.style.color='var(--g2)'">💬 Podpora: info@ulovprofil.cz</a>
         <span style="font-family:var(--mono);font-size:11px;color:var(--g2)">© 2026 UlovProfil</span>
+        <a href="https://audeflow.cz" target="_blank" style="font-family:var(--mono);font-size:11px;color:var(--g2);text-decoration:none;margin-left:auto;transition:color .15s" onmouseover="this.style.color='var(--white)'" onmouseout="this.style.color='var(--g2)'">Created by <strong style="color:var(--white)">AUDEFLOW</strong></a>
       </div>
 
       <!-- SEO: Keyword-rich footer obsah pro crawlery -->
@@ -883,8 +1058,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;height:56px;display:flex;ali
 
     </div>
   </div>
-  </article>
-  </main>
+  <div style="height:60px"></div>
 </div>
 <div class="page h" id="page-auth">
   <div class="awrap">
@@ -905,9 +1079,22 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;height:56px;display:flex;ali
         <div class="asw">Nemáš účet? <a onclick="swAuth('register')">Zaregistruj se</a></div>
       </div>
       <div id="af-re" class="h">
-        <div class="fg"><label class="fl">E-mail</label><input type="email" class="fi" id="re-e" placeholder="vas@email.cz"></div>
-        <div class="fg"><label class="fl">Heslo</label><input type="password" class="fi" id="re-p" placeholder="Min. 6 znaků"></div>
-        <div class="fg"><label class="fl">Heslo znovu</label><input type="password" class="fi" id="re-p2" placeholder="Zopakuj heslo" onkeydown="if(event.key==='Enter')doReg()"></div>
+        <div class="fg" style="display:flex;align-items:center;gap:16px;margin-bottom:18px">
+          <div class="avatar-upload" onclick="document.getElementById('reg-avatar-input').click()" title="Přidat profilovou fotku">
+            <div class="avatar-placeholder" id="reg-av-placeholder"><span id="reg-av-initials">?</span></div>
+            <img id="reg-av-img" src="" alt="" style="display:none;width:80px;height:80px;border-radius:var(--r);object-fit:cover">
+            <div class="avatar-overlay">📷</div>
+          </div>
+          <input type="file" id="reg-avatar-input" accept="image/*" style="display:none" onchange="previewRegAvatar(this)">
+          <div>
+            <div style="font-size:13px;font-weight:600;margin-bottom:3px">Profilová fotka</div>
+            <div style="font-size:11px;color:var(--g2);line-height:1.5">Nepovinné. Zvyšuje důvěryhodnost<br>mezi kupujícími a prodejci.</div>
+          </div>
+        </div>
+        <div class="fg"><label class="fl">Uživatelské jméno *</label><input type="text" class="fi" id="re-name" placeholder="např. honza_prodava" oninput="updateRegInitials(this.value)"></div>
+        <div class="fg"><label class="fl">E-mail *</label><input type="email" class="fi" id="re-e" placeholder="vas@email.cz"></div>
+        <div class="fg"><label class="fl">Heslo *</label><input type="password" class="fi" id="re-p" placeholder="Min. 6 znaků"></div>
+        <div class="fg"><label class="fl">Heslo znovu *</label><input type="password" class="fi" id="re-p2" placeholder="Zopakuj heslo" onkeydown="if(event.key==='Enter')doReg()"></div>
         <button class="bfull" onclick="doReg()" id="btn-re">Vytvořit účet</button>
         <div class="fmsg err h" id="re-msg"></div>
         <div class="asw">Máš účet? <a onclick="swAuth('login')">Přihlásit se</a></div>
@@ -937,17 +1124,44 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;height:56px;display:flex;ali
     <div id="dt-l"><div class="g4" id="my-grid"></div></div>
     <div id="dt-o" class="h"><div class="g4" id="ord-grid"></div></div>
     <div id="dt-p" class="h">
-      <div style="max-width:460px">
+      <div style="max-width:560px">
+        <!-- PROFIL KARTA -->
         <div class="scard" style="margin-bottom:12px">
-          <div style="width:56px;height:56px;border-radius:var(--r);background:var(--odim);border:1px solid var(--obrd);display:grid;place-items:center;font-family:var(--mono);font-size:19px;color:var(--orange);margin-bottom:13px" id="pav">?</div>
-          <div style="font-family:var(--mono);font-size:13px;margin-bottom:3px" id="pem">—</div>
-          <div style="font-family:var(--mono);font-size:11px;color:var(--g2)" id="psince">—</div>
+          <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px">
+            <div class="avatar-upload" onclick="document.getElementById('prof-avatar-input').click()" title="Změnit fotku">
+              <img id="prof-av-img" src="" alt="" style="display:none;width:80px;height:80px;border-radius:var(--r);object-fit:cover">
+              <div class="avatar-placeholder" id="prof-av-placeholder"><span id="pav">?</span></div>
+              <div class="avatar-overlay">📷</div>
+            </div>
+            <input type="file" id="prof-avatar-input" accept="image/*" style="display:none" onchange="uploadAvatar(this)">
+            <div>
+              <div style="font-family:var(--mono);font-size:14px;font-weight:600;margin-bottom:3px" id="pem">—</div>
+              <div style="font-family:var(--mono);font-size:11px;color:var(--g2);margin-bottom:6px" id="psince">—</div>
+              <div id="prof-rating-badge"></div>
+            </div>
+          </div>
+          <div class="fg" style="margin-bottom:12px">
+            <label class="fl">Uživatelské jméno</label>
+            <div style="display:flex;gap:8px">
+              <input type="text" class="fi" id="prof-name" placeholder="Tvoje jméno">
+              <button onclick="saveProfile()" class="bg" style="flex-shrink:0;padding:0 14px">Uložit</button>
+            </div>
+            <div class="fhint">Viditelné pro ostatní uživatele při transakcích.</div>
+          </div>
           <div class="div"></div>
           <button onclick="signOut()" style="background:var(--rdim);color:var(--red);border:1px solid var(--rbrd);border-radius:var(--r2);padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer">Odhlásit se</button>
         </div>
-        <div class="scard">
+
+        <!-- PLATBY -->
+        <div class="scard" style="margin-bottom:12px">
           <div style="font-size:14px;font-weight:600;margin-bottom:9px">Jak přijímat platby</div>
           <div style="font-size:13px;color:var(--g1);line-height:1.75">Po prodeji ti zašleme platbu. Kontaktuj nás: <span style="color:var(--orange);font-family:var(--mono)">info@ulovprofil.cz</span></div>
+        </div>
+
+        <!-- MÁ HODNOCENÍ -->
+        <div class="scard">
+          <div style="font-size:14px;font-weight:600;margin-bottom:14px">Moje hodnocení</div>
+          <div id="my-reviews-list"><div style="font-family:var(--mono);font-size:11px;color:var(--g2)">Načítám...</div></div>
         </div>
       </div>
     </div>
@@ -1003,6 +1217,33 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;height:56px;display:flex;ali
   </div>
 </div>
 
+<!-- MODAL: NAPSAT HODNOCENÍ -->
+<div class="mo h" id="mo-review">
+  <div class="md" style="max-width:460px">
+    <div class="mhd">
+      <div class="mtitle">Ohodnoť transakci</div>
+      <button class="mc" onclick="closeMo('mo-review')">×</button>
+    </div>
+    <div style="font-size:13px;color:var(--g1);margin-bottom:18px" id="rev-target-info"></div>
+    <div class="fg">
+      <label class="fl">Hodnocení *</label>
+      <div class="stars-input" id="stars-input">
+        <span onclick="setStars(1)" id="s1">★</span>
+        <span onclick="setStars(2)" id="s2">★</span>
+        <span onclick="setStars(3)" id="s3">★</span>
+        <span onclick="setStars(4)" id="s4">★</span>
+        <span onclick="setStars(5)" id="s5">★</span>
+      </div>
+    </div>
+    <div class="fg">
+      <label class="fl">Komentář</label>
+      <textarea class="fta" id="rev-text" placeholder="Popiš zkušenost s transakcí..." style="min-height:90px"></textarea>
+    </div>
+    <div class="fmsg err h" id="rev-msg"></div>
+    <button class="bfull" onclick="submitReview()" id="btn-rev">Odeslat hodnocení</button>
+  </div>
+</div>
+
 <!-- SUCCESS -->
 <div class="page h" id="page-success">
   <div class="scwrap">
@@ -1017,7 +1258,8 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;height:56px;display:flex;ali
       <div class="step"><div class="stepn">3</div><div><div class="stept">Ověř účet (48 hodin)</div><div class="stepd">Zkontroluj followery, přístupy a statistiky.</div></div></div>
       <div class="step"><div class="stepn">4</div><div><div class="stept">Potvrď a uvolni platbu</div><div class="stepd">Po potvrzení peníze jdou prodejci. Účet je tvůj!</div></div></div>
     </div>
-    <button class="bfull" style="max-width:280px;margin:18px auto 0" onclick="go('home')">Zpět do marketplace →</button>
+    <button class="bfull" style="max-width:280px;margin:18px auto 8px" onclick="go('home')">Zpět do marketplace →</button>
+    <button class="bfull" style="max-width:280px;margin:0 auto;background:var(--bg2);border:1px solid var(--border);color:var(--g1)" onclick="openReviewFromSuccess()" id="btn-review-success">⭐ Ohodnotit transakci</button>
   </div>
 </div>
 
@@ -1301,6 +1543,102 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;height:56px;display:flex;ali
   </div>
 </div>
 
+<!-- LISTING DETAIL PAGE -->
+<div class="page h" id="page-listing">
+  <div class="wrap" style="padding-top:32px;padding-bottom:60px;max-width:860px">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:24px">
+      <button onclick="go('home')" style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);padding:7px 14px;font-size:12px;color:var(--g1);cursor:pointer;font-family:var(--sans)">← Zpět na marketplace</button>
+      <div id="ld-breadcrumb" style="font-family:var(--mono);font-size:11px;color:var(--g2)"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 340px;gap:20px" id="ld-grid">
+      <!-- LEFT -->
+      <div>
+        <!-- Gallery -->
+        <div id="ld-gallery" style="position:relative;height:280px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r3);overflow:hidden;margin-bottom:20px">
+          <div id="ld-gallery-inner" style="display:flex;height:100%;transition:transform .3s ease"></div>
+          <div id="ld-gallery-empty" style="display:flex;align-items:center;justify-content:center;height:100%;flex-direction:column;gap:8px">
+            <div style="font-size:40px;opacity:.25">📷</div>
+            <div style="font-family:var(--mono);font-size:11px;color:var(--g2)">Prodejce nepřidal fotky</div>
+          </div>
+          <div id="ld-gallery-nav" class="h" style="position:absolute;bottom:12px;left:50%;transform:translateX(-50%);display:flex;gap:6px"></div>
+          <div id="ld-platform-badge" style="position:absolute;top:14px;left:14px"></div>
+        </div>
+        <!-- Stats -->
+        <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--r3);padding:24px;margin-bottom:16px">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px">
+            <div>
+              <div id="ld-followers" style="font-family:var(--mono);font-size:48px;font-weight:400;color:var(--white);line-height:1;letter-spacing:-.03em"></div>
+              <div id="ld-niche" style="font-family:var(--mono);font-size:11px;color:var(--g2);text-transform:uppercase;letter-spacing:.05em;margin-top:4px"></div>
+            </div>
+            <div style="text-align:right">
+              <div style="font-family:var(--mono);font-size:10px;color:var(--green);margin-bottom:4px">◉ Ověřeno</div>
+              <div id="ld-verified" style="font-family:var(--mono);font-size:10px;color:var(--g2)"></div>
+            </div>
+          </div>
+          <div class="dstats" id="ld-stats" style="margin-bottom:16px"></div>
+          <!-- Engagement -->
+          <div id="ld-eng-wrap" style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r2);padding:14px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+              <div style="font-family:var(--mono);font-size:10px;color:var(--g2);text-transform:uppercase;letter-spacing:.07em">Engagement Rate</div>
+              <div id="ld-eng-val" style="font-family:var(--mono);font-size:13px;color:var(--white)"></div>
+            </div>
+            <div style="height:6px;background:var(--bg4);border-radius:3px;overflow:hidden;margin-bottom:6px">
+              <div id="ld-eng-fill" style="height:100%;border-radius:3px;transition:width .6s ease"></div>
+            </div>
+            <div style="display:flex;justify-content:space-between">
+              <span style="font-family:var(--mono);font-size:9px;color:var(--g2)">0%</span>
+              <span style="font-family:var(--mono);font-size:9px;color:var(--g2)">Průměr 3%</span>
+              <span style="font-family:var(--mono);font-size:9px;color:var(--g2)">15%+</span>
+            </div>
+          </div>
+        </div>
+        <!-- Description -->
+        <div id="ld-desc-wrap" style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--r3);padding:24px;margin-bottom:16px">
+          <div style="font-family:var(--mono);font-size:10px;color:var(--g2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px">Popis inzerátu</div>
+          <div id="ld-desc" style="font-size:14px;color:var(--g1);line-height:1.75"></div>
+        </div>
+        <!-- Escrow info -->
+        <div style="background:rgba(34,197,94,.06);border:1px solid rgba(34,197,94,.2);border-radius:var(--r3);padding:20px;margin-bottom:16px">
+          <div style="font-size:13px;font-weight:600;color:var(--green);margin-bottom:10px">🔒 Jak funguje ochrana kupujícího</div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <div style="font-size:12px;color:var(--g1);display:flex;gap:8px"><span style="color:var(--green);flex-shrink:0">1.</span>Zaplatíš — peníze jdou na escrow, ne prodejci</div>
+            <div style="font-size:12px;color:var(--g1);display:flex;gap:8px"><span style="color:var(--green);flex-shrink:0">2.</span>Prodejce předá přístupy do 24 hodin</div>
+            <div style="font-size:12px;color:var(--g1);display:flex;gap:8px"><span style="color:var(--green);flex-shrink:0">3.</span>Máš 48 hodin na ověření — pak teprve uvolníme platbu</div>
+            <div style="font-size:12px;color:var(--g1);display:flex;gap:8px"><span style="color:var(--green);flex-shrink:0">4.</span>Při problému vstoupíme jako arbitr do 48 hodin</div>
+          </div>
+        </div>
+
+        <!-- Hodnocení prodejce -->
+        <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--r3);padding:24px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+            <div style="font-family:var(--mono);font-size:10px;color:var(--g2);text-transform:uppercase;letter-spacing:.08em">Hodnocení prodejce</div>
+            <div id="ld-seller-rating"></div>
+          </div>
+          <div id="ld-reviews-list"><div style="font-family:var(--mono);font-size:11px;color:var(--g2)">Načítám hodnocení...</div></div>
+        </div>
+      </div>
+      <!-- RIGHT: sticky buy card -->
+      <div>
+        <div style="position:sticky;top:76px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r3);padding:24px">
+          <div id="ld-platform-name" style="font-family:var(--mono);font-size:10px;color:var(--g2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px"></div>
+          <div id="ld-price-big" style="font-size:32px;font-weight:700;color:var(--orange);font-family:var(--mono);letter-spacing:-.02em;margin-bottom:4px"></div>
+          <div style="font-family:var(--mono);font-size:10px;color:var(--g2);margin-bottom:20px">Včetně 7% poplatku · Platba v CZK</div>
+          <button class="bfull" id="ld-buy-btn" onclick="ldGoCheckout()" style="margin-bottom:12px">Koupit bezpečně →</button>
+          <div style="font-family:var(--mono);font-size:10px;color:var(--green);text-align:center;margin-bottom:16px">🔒 Escrow ochrana každé transakce</div>
+          <div style="height:1px;background:var(--border);margin-bottom:16px"></div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <div style="display:flex;justify-content:space-between;font-size:12px"><span style="color:var(--g2)">Cena inzerátu</span><span id="ld-base-price" style="font-family:var(--mono)"></span></div>
+            <div style="display:flex;justify-content:space-between;font-size:12px"><span style="color:var(--g2)">Poplatek platformy</span><span id="ld-fee-price" style="font-family:var(--mono);color:var(--g2)"></span></div>
+            <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:600;padding-top:8px;border-top:1px solid var(--border)"><span>Celkem</span><span id="ld-total-price" style="font-family:var(--mono);color:var(--orange)"></span></div>
+          </div>
+          <div style="height:1px;background:var(--border);margin:16px 0"></div>
+          <div style="font-size:11px;color:var(--g2);line-height:1.7">Nákupem souhlasíš s <span onclick="go('vop')" style="color:var(--orange);cursor:pointer;text-decoration:underline">obchodními podmínkami</span>. Převod účtů může být v rozporu s TOS dané platformy.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL DETAIL -->
 <div class="mo h" id="mo-detail">
   <div class="md" style="max-width:700px;padding:0;overflow:hidden">
@@ -1556,10 +1894,16 @@ function setNavU(u){
   const nu=document.getElementById('nav-user');nu.classList.remove('h');nu.style.display='flex';
   document.getElementById('nav-av').textContent=u.email.substring(0,2).toUpperCase();
   document.getElementById('nav-em').textContent=u.email;
+  // mobile
+  document.getElementById('mob-auth-guest').classList.add('h');
+  document.getElementById('mob-auth-user').classList.remove('h');
 }
 function setNavG(){
   document.getElementById('nav-guest').style.display='';
   document.getElementById('nav-user').classList.add('h');
+  // mobile
+  document.getElementById('mob-auth-guest').classList.remove('h');
+  document.getElementById('mob-auth-user').classList.add('h');
 }
 
 function go(page,sub){
@@ -1586,16 +1930,17 @@ function go(page,sub){
     show('page-admin');loadAdmin();
   }
   else if(page==='vop'){show('page-vop');}
+  else if(page==='how'){
+    show('page-how');
+    document.getElementById('nl-how')?.classList.add('on');
+  }
+  else if(page==='listing'){show('page-listing');}
   window.scrollTo(0,0);
 }
 
 function show(id){document.getElementById(id).classList.remove('h');}
 function scrollListings(){document.getElementById('listings-anchor')?.scrollIntoView({behavior:'smooth'});}
-function scrollHow(){
-  show('page-home');
-  document.querySelectorAll('.page').forEach(p=>{if(p.id!=='page-home')p.classList.add('h');});
-  setTimeout(()=>document.getElementById('how-section')?.scrollIntoView({behavior:'smooth'}),100);
-}
+function scrollHow(){ go('how'); }
 
 // AUTH
 function swAuth(tab){
@@ -1618,21 +1963,182 @@ async function doLogin(){
   toast('Přihlášení úspěšné 👋','success');
   go(user?.email===ADMIN?'admin':'dashboard');
 }
+// AVATAR HELPERS
+let regAvatarData = null;
+function previewRegAvatar(input){
+  const file=input.files[0];if(!file)return;
+  const r=new FileReader();
+  r.onload=e=>{
+    regAvatarData=e.target.result;
+    document.getElementById('reg-av-img').src=regAvatarData;
+    document.getElementById('reg-av-img').style.display='block';
+    document.getElementById('reg-av-placeholder').style.display='none';
+  };
+  r.readAsDataURL(file);
+}
+function updateRegInitials(val){
+  const initials=val.trim().substring(0,2).toUpperCase()||'?';
+  document.getElementById('reg-av-initials').textContent=initials;
+}
+
+async function uploadAvatar(input){
+  const file=input.files[0];if(!file||!user)return;
+  const r=new FileReader();
+  r.onload=async e=>{
+    const base64=e.target.result;
+    // Save to profiles table
+    await sb.from('profiles').upsert({user_id:user.id,avatar_url:base64,updated_at:new Date().toISOString()});
+    document.getElementById('prof-av-img').src=base64;
+    document.getElementById('prof-av-img').style.display='block';
+    document.getElementById('prof-av-placeholder').style.display='none';
+    toast('Profilová fotka aktualizována ✅','success');
+  };
+  r.readAsDataURL(file);
+}
+
+async function saveProfile(){
+  if(!user)return;
+  const name=document.getElementById('prof-name').value.trim();
+  if(!name){toast('Zadej uživatelské jméno','error');return;}
+  const{error}=await sb.from('profiles').upsert({user_id:user.id,username:name,updated_at:new Date().toISOString()});
+  if(error){toast('Chyba: '+error.message,'error');return;}
+  toast('Profil uložen ✅','success');
+}
+
+async function loadProfile(){
+  if(!user)return;
+  try{
+    const{data}=await sb.from('profiles').select('*').eq('user_id',user.id).single();
+    if(data){
+      if(data.username) document.getElementById('prof-name').value=data.username;
+      if(data.avatar_url){
+        document.getElementById('prof-av-img').src=data.avatar_url;
+        document.getElementById('prof-av-img').style.display='block';
+        document.getElementById('prof-av-placeholder').style.display='none';
+      }
+      // Rating badge
+      await loadMyReviews();
+    }
+  }catch(e){}
+}
+
+// REVIEWS
+let reviewStars=0;
+let reviewTransactionId=null;
+let reviewSellerEmail=null;
+
+function setStars(n){
+  reviewStars=n;
+  [1,2,3,4,5].forEach(i=>{
+    document.getElementById('s'+i).classList.toggle('on',i<=n);
+  });
+}
+
+function openReviewModal(transactionId, sellerEmail, listingInfo){
+  reviewTransactionId=transactionId;
+  reviewSellerEmail=sellerEmail;
+  reviewStars=0;
+  setStars(0);
+  document.getElementById('rev-text').value='';
+  document.getElementById('rev-msg').classList.add('h');
+  document.getElementById('rev-target-info').innerHTML=`Hodnotíš prodejce: <strong style="color:var(--orange)">${sellerEmail||'—'}</strong><br><span style="font-size:11px;color:var(--g2)">${listingInfo||''}</span>`;
+  openMo('mo-review');
+}
+
+function openReviewFromSuccess(){
+  if(!chListing) return;
+  openReviewModal(null, chListing.seller_email, `${chListing.platform} · ${chListing.followers} · ${chListing.niche}`);
+}
+
+async function submitReview(){
+  if(!user){toast('Musíš být přihlášen','error');return;}
+  if(!reviewStars){
+    const msg=document.getElementById('rev-msg');
+    showMsg(msg,'Vyber počet hvězdiček');msg.classList.remove('h');return;
+  }
+  const btn=document.getElementById('btn-rev');
+  btn.disabled=true;btn.textContent='Odesílám...';
+  const{error}=await sb.from('reviews').insert({
+    reviewer_id:user.id,
+    reviewer_email:user.email,
+    reviewee_email:reviewSellerEmail,
+    stars:reviewStars,
+    text:document.getElementById('rev-text').value.trim()||null,
+    transaction_id:reviewTransactionId||null,
+    created_at:new Date().toISOString()
+  });
+  btn.disabled=false;btn.textContent='Odeslat hodnocení';
+  if(error){
+    const msg=document.getElementById('rev-msg');
+    showMsg(msg,'Chyba: '+error.message);msg.classList.remove('h');return;
+  }
+  closeMo('mo-review');
+  toast('Hodnocení odesláno ⭐','success');
+}
+
+function renderStars(n){
+  return '★'.repeat(n)+'☆'.repeat(5-n);
+}
+
+async function loadReviewsForSeller(sellerEmail, containerId, ratingBadgeId){
+  if(!sellerEmail) return;
+  try{
+    const{data}=await sb.from('reviews').select('*').eq('reviewee_email',sellerEmail).order('created_at',{ascending:false});
+    const reviews=data||[];
+    const el=document.getElementById(containerId);
+    if(!reviews.length){
+      el.innerHTML=`<div style="font-family:var(--mono);font-size:11px;color:var(--g2)">Zatím žádné hodnocení.</div>`;
+    }else{
+      const avg=(reviews.reduce((s,r)=>s+r.stars,0)/reviews.length).toFixed(1);
+      if(ratingBadgeId) document.getElementById(ratingBadgeId).innerHTML=`<span class="rating-badge">★ ${avg} <span style="color:var(--g2)">(${reviews.length})</span></span>`;
+      el.innerHTML=reviews.map(r=>`
+        <div class="review-card">
+          <div class="review-header">
+            <div class="review-av">${(r.reviewer_email||'?').substring(0,2).toUpperCase()}</div>
+            <div>
+              <div style="font-size:12px;font-weight:600">${r.reviewer_email?.split('@')[0]||'Anonymní'}</div>
+              <div class="review-stars" style="color:var(--amber)">${renderStars(r.stars)}</div>
+            </div>
+          </div>
+          ${r.text?`<div class="review-text">${r.text}</div>`:''}
+          <div class="review-meta">${new Date(r.created_at).toLocaleDateString('cs-CZ')}</div>
+        </div>
+      `).join('');
+    }
+  }catch(e){
+    document.getElementById(containerId).innerHTML=`<div style="font-family:var(--mono);font-size:11px;color:var(--g2)">Hodnocení nelze načíst.</div>`;
+  }
+}
+
+async function loadMyReviews(){
+  if(!user)return;
+  await loadReviewsForSeller(user.email,'my-reviews-list','prof-rating-badge');
+}
+
 async function doReg(){
+  const name=document.getElementById('re-name').value.trim();
   const e=document.getElementById('re-e').value.trim();
   const p=document.getElementById('re-p').value;
   const p2=document.getElementById('re-p2').value;
   const msg=document.getElementById('re-msg');
   const btn=document.getElementById('btn-re');
   msg.classList.add('h');
+  if(!name){showMsg(msg,'Zadej uživatelské jméno');return;}
   if(!e||!p){showMsg(msg,'Vyplň všechna pole');return;}
   if(p.length<6){showMsg(msg,'Heslo musí mít alespoň 6 znaků');return;}
   if(p!==p2){showMsg(msg,'Hesla se neshodují');return;}
   btn.disabled=true;btn.textContent='Zakládám...';
-  const{error}=await sb.auth.signUp({email:e,password:p});
+  const{data,error}=await sb.auth.signUp({email:e,password:p});
+  if(error){btn.disabled=false;btn.textContent='Vytvořit účet';showMsg(msg,error.message);return;}
+  // Save profile
+  if(data?.user){
+    const profileData={user_id:data.user.id,username:name,updated_at:new Date().toISOString()};
+    if(regAvatarData) profileData.avatar_url=regAvatarData;
+    await sb.from('profiles').insert(profileData);
+  }
   btn.disabled=false;btn.textContent='Vytvořit účet';
-  if(error){showMsg(msg,error.message);return;}
   toast('Účet vytvořen! Vítej 🎉','success');
+  regAvatarData=null;
   go('dashboard');
 }
 async function signOut(){
@@ -1641,9 +2147,41 @@ async function signOut(){
 }
 
 // PUBLIC LISTINGS
+function renderSkeletons(count=6){
+  const g=document.getElementById('pub-grid');
+  g.innerHTML=Array(count).fill(0).map(()=>`
+    <div class="skel-card">
+      <div class="skeleton skel-line" style="width:50%;height:10px;margin-bottom:16px"></div>
+      <div class="skeleton skel-big"></div>
+      <div class="skeleton skel-sm"></div>
+      <div style="margin-top:20px;display:flex;justify-content:space-between;align-items:center">
+        <div class="skeleton" style="height:24px;width:35%"></div>
+        <div class="skeleton" style="height:32px;width:28%;border-radius:6px"></div>
+      </div>
+    </div>
+  `).join('');
+}
+
 async function loadPub(){
-  const{data}=await sb.from('listings').select('*').eq('status','active').order('created_at',{ascending:false});
-  allL=data||[];renderPub(allL);
+  renderSkeletons();
+  try{
+    const{data,error}=await sb.from('listings').select('*').eq('status','active').order('created_at',{ascending:false});
+    if(error){
+      console.error('loadPub Supabase error:', error.message, error.code, error.details, error.hint);
+      throw new Error(error.message||error.code||'Supabase error');
+    }
+    allL=data||[];
+    renderPub(allL);
+  }catch(err){
+    const msg=err?.message||'Neznámá chyba';
+    console.error('loadPub error:', msg);
+    const g=document.getElementById('pub-grid');
+    g.innerHTML=`<div class="err-banner" style="grid-column:1/-1">
+      ⚠️ Nepodařilo se načíst nabídky: ${msg}
+      <button onclick="loadPub()">Zkusit znovu</button>
+    </div>`;
+    document.getElementById('lcount').textContent='Chyba načítání';
+  }
 }
 function platformLogo(p){
   const logos={
@@ -1730,6 +2268,7 @@ function renderPub(list){
         </div>
 
         <div class="lcf">${l.followers}</div>
+        <div class="lcf-label">sledujících</div>
         <div class="lcn">${l.niche}${l.audience?' · '+l.audience:''}</div>
 
         ${miniChart(color)}
@@ -1751,27 +2290,76 @@ function renderPub(list){
             <div class="lcp">${totalPrice} Kč</div>
             <div style="font-family:var(--mono);font-size:9px;color:var(--g2);margin-top:2px">48h ochrana kupujícího</div>
           </div>
-          <button class="lcard-btn" onclick="event.stopPropagation();openDetail(${l.id})">Ulov →</button>
+          <button class="lcard-btn" onclick="event.stopPropagation();openDetail(${l.id})">Koupit →</button>
         </div>
       </div>
     </div>`;
   }).join('');
 }
+let activeSort = 'new';
+let maxPrice = 500000;
+
+function setSort(val, el){
+  activeSort = val;
+  document.querySelectorAll('.sort-pill').forEach(p=>p.classList.remove('on'));
+  el.classList.add('on');
+  filterL();
+}
+
+function onPriceSlider(val){
+  maxPrice = parseInt(val);
+  const label = document.getElementById('price-slider-val');
+  label.textContent = maxPrice >= 500000 ? 'Bez omezení' : fp(maxPrice) + ' Kč';
+  filterL();
+}
+
+function clearAllFilters(){
+  activeF = '';
+  maxPrice = 500000;
+  document.getElementById('search-in').value = '';
+  document.getElementById('price-slider').value = 500000;
+  document.getElementById('price-slider-val').textContent = 'Bez omezení';
+  document.querySelectorAll('.fchip').forEach((c,i)=>c.classList.toggle('on', i===0));
+  activeSort = 'new';
+  document.querySelectorAll('.sort-pill').forEach((p,i)=>p.classList.toggle('on', i===0));
+  updateActiveFilters();
+  filterL();
+}
+
+function updateActiveFilters(){
+  const tags = [];
+  if(activeF) tags.push(activeF);
+  const q = document.getElementById('search-in')?.value;
+  if(q) tags.push(`"${q}"`);
+  if(maxPrice < 500000) tags.push(`Max ${fp(maxPrice)} Kč`);
+  const wrap = document.getElementById('active-filters');
+  const tagsEl = document.getElementById('active-tags');
+  if(tags.length){
+    wrap.classList.remove('h');
+    tagsEl.innerHTML = tags.map(t=>`<div class="active-tag">${t}</div>`).join('');
+  } else {
+    wrap.classList.add('h');
+  }
+}
+
 function filterL(){
-  const q=document.getElementById('search-in').value.toLowerCase();
-  const srt=document.getElementById('sort-in').value;
-  let list=[...allL];
-  if(activeF)list=list.filter(l=>l.platform===activeF);
-  if(q)list=list.filter(l=>(l.niche+' '+l.platform+' '+(l.audience||'')).toLowerCase().includes(q));
-  if(srt==='asc')list.sort((a,b)=>a.price-b.price);
-  else if(srt==='desc')list.sort((a,b)=>b.price-a.price);
-  document.getElementById('lcount').textContent=list.length+' nabídek';
+  const q = (document.getElementById('search-in')?.value||'').toLowerCase();
+  let list = [...allL];
+  if(activeF) list = list.filter(l=>l.platform===activeF);
+  if(q) list = list.filter(l=>(l.niche+' '+l.platform+' '+(l.audience||'')).toLowerCase().includes(q));
+  if(maxPrice < 500000) list = list.filter(l=>parseInt(l.price)<=maxPrice);
+  if(activeSort==='asc') list.sort((a,b)=>parseInt(a.price)-parseInt(b.price));
+  else if(activeSort==='desc') list.sort((a,b)=>parseInt(b.price)-parseInt(a.price));
+  else if(activeSort==='eng') list.sort((a,b)=>(parseFloat(b.engagement)||0)-(parseFloat(a.engagement)||0));
+  updateActiveFilters();
   renderPub(list);
 }
+
 function setF(f,el){
   activeF=f;
   document.querySelectorAll('.fchip').forEach(c=>c.classList.remove('on'));
-  el.classList.add('on');filterL();
+  el.classList.add('on');
+  filterL();
 }
 
 // DETAIL
@@ -1833,6 +2421,12 @@ function updatePricePreview(){
 }
 
 function openDetail(id){
+  const l=allL.find(x=>x.id===id);if(!l)return;
+  // On desktop open detail page; modal still accessible via openModal(id)
+  openListingDetail(l);
+}
+
+function openModal(id){
   const l=allL.find(x=>x.id===id);if(!l)return;
   detail=l;
   const color=platformColor(l.platform);
@@ -1977,44 +2571,58 @@ function resetPay(){
 async function loadDash(){
   if(!user)return;
   updateProf();
-  const{data}=await sb.from('listings').select('*').eq('user_id',user.id).order('created_at',{ascending:false});
-  const list=data||[];
-  document.getElementById('ds-t').textContent=list.length;
-  document.getElementById('ds-a').textContent=list.filter(l=>l.status==='active').length;
-  document.getElementById('ds-p').textContent=list.filter(l=>l.status==='pending').length;
-  document.getElementById('ds-s').textContent=list.filter(l=>l.status==='sold').length;
-  const g=document.getElementById('my-grid');
-  if(!list.length){g.innerHTML=`<div class="empty"><div class="ei">📋</div><div class="et">Zatím žádné nabídky</div><div class="ed">Přidej svůj první účet.</div><button class="bsm bsm-o" onclick="openAdd()" style="margin-top:4px">+ Přidat nabídku</button></div>`;return;}
-  g.innerHTML=list.map(l=>`
-    <div class="lcard" style="cursor:default">
-      <div class="lct"><span class="pt ${ptC(l.platform)}">${l.platform}</span><span class="st ${stC(l.status)}">${stL(l.status)}</span></div>
-      <div class="lcf">${l.followers}</div>
-      <div class="lcn">${l.niche}</div>
-      <div class="lcs">
-        <div class="lcst"><div class="v">${l.engagement||'—'}</div><div class="l">Engagement</div></div>
-        <div class="lcst"><div class="v">${l.audience||'—'}</div><div class="l">Audience</div></div>
-        <div class="lcst"><div class="v">${l.account_age||'—'}</div><div class="l">Stáří</div></div>
+  try{
+    const{data,error}=await sb.from('listings').select('*').eq('user_id',user.id).order('created_at',{ascending:false});
+    if(error)throw error;
+    const list=data||[];
+    document.getElementById('ds-t').textContent=list.length;
+    document.getElementById('ds-a').textContent=list.filter(l=>l.status==='active').length;
+    document.getElementById('ds-p').textContent=list.filter(l=>l.status==='pending').length;
+    document.getElementById('ds-s').textContent=list.filter(l=>l.status==='sold').length;
+    const g=document.getElementById('my-grid');
+    if(!list.length){g.innerHTML=`<div class="empty"><div class="ei">📋</div><div class="et">Zatím žádné nabídky</div><div class="ed">Přidej svůj první účet.</div><button class="bsm bsm-o" onclick="openAdd()" style="margin-top:4px">+ Přidat nabídku</button></div>`;
+    }else{
+      g.innerHTML=list.map(l=>`
+        <div class="lcard" style="cursor:default">
+          <div class="lct"><span class="pt ${ptC(l.platform)}">${l.platform}</span><span class="st ${stC(l.status)}">${stL(l.status)}</span></div>
+          <div class="lcf">${l.followers}</div>
+          <div class="lcn">${l.niche}</div>
+          <div class="lcs">
+            <div class="lcst"><div class="v">${l.engagement||'—'}</div><div class="l">Engagement</div></div>
+            <div class="lcst"><div class="v">${l.audience||'—'}</div><div class="l">Audience</div></div>
+            <div class="lcst"><div class="v">${l.account_age||'—'}</div><div class="l">Stáří</div></div>
+          </div>
+          <div class="lcfo">
+            <div class="lcp">${fp(l.price)} Kč<small>tvá výplata</small></div>
+            <button class="bsm bsm-r" onclick="delL(${l.id})">Smazat</button>
+          </div>
+        </div>
+      `).join('');
+    }
+  }catch(err){
+    console.error('loadDash listings error',err);
+    document.getElementById('my-grid').innerHTML=`<div class="err-banner" style="grid-column:1/-1">⚠️ Nepodařilo se načíst nabídky.<button onclick="loadDash()">Zkusit znovu</button></div>`;
+  }
+  try{
+    const{data:ords,error:oErr}=await sb.from('transactions').select('*').eq('buyer_id',user.id).order('created_at',{ascending:false});
+    if(oErr)throw oErr;
+    const og=document.getElementById('ord-grid');
+    if(!ords||!ords.length){og.innerHTML=`<div class="empty"><div class="ei">🛒</div><div class="et">Žádné nákupy</div><div class="ed">Prohlédni nabídky v marketplace.</div><button class="bsm bsm-o" onclick="go('home')" style="margin-top:4px">Prohlédnout →</button></div>`;return;}
+    og.innerHTML=ords.map(o=>`
+      <div class="lcard" style="cursor:default">
+        <div class="lct"><span class="pt ${ptC(o.listing_platform)}">${o.listing_platform}</span><span class="st ${o.status==='completed'?'st-a':'st-p'}">${o.status==='completed'?'✓ Dokončeno':'⏳ Pending'}</span></div>
+        <div class="lcf">${o.listing_followers}</div>
+        <div class="lcn">${o.listing_niche}</div>
+        <div class="lcfo" style="margin-top:14px">
+          <div class="lcp">${fp(o.amount)} Kč</div>
+          ${o.status==='pending_transfer'?`<button class="bsm bsm-gr" onclick="confirmOrd(${o.id})">✓ Potvrdit přijetí</button>`:''}
+        </div>
       </div>
-      <div class="lcfo">
-        <div class="lcp">${fp(l.price)} Kč<small>tvá výplata</small></div>
-        <button class="bsm bsm-r" onclick="delL(${l.id})">Smazat</button>
-      </div>
-    </div>
-  `).join('');
-  const{data:ords}=await sb.from('transactions').select('*').eq('buyer_id',user.id).order('created_at',{ascending:false});
-  const og=document.getElementById('ord-grid');
-  if(!ords||!ords.length){og.innerHTML=`<div class="empty"><div class="ei">🛒</div><div class="et">Žádné nákupy</div><div class="ed">Prohlédni nabídky v marketplace.</div><button class="bsm bsm-o" onclick="go('home')" style="margin-top:4px">Prohlédnout →</button></div>`;return;}
-  og.innerHTML=ords.map(o=>`
-    <div class="lcard" style="cursor:default">
-      <div class="lct"><span class="pt ${ptC(o.listing_platform)}">${o.listing_platform}</span><span class="st ${o.status==='completed'?'st-a':'st-p'}">${o.status==='completed'?'✓ Dokončeno':'⏳ Pending'}</span></div>
-      <div class="lcf">${o.listing_followers}</div>
-      <div class="lcn">${o.listing_niche}</div>
-      <div class="lcfo" style="margin-top:14px">
-        <div class="lcp">${fp(o.amount)} Kč</div>
-        ${o.status==='pending_transfer'?`<button class="bsm bsm-gr" onclick="confirmOrd(${o.id})">✓ Potvrdit přijetí</button>`:''}
-      </div>
-    </div>
-  `).join('');
+    `).join('');
+  }catch(err){
+    console.error('loadDash orders error',err);
+    document.getElementById('ord-grid').innerHTML=`<div class="err-banner">⚠️ Nepodařilo se načíst nákupy.<button onclick="loadDash()">Zkusit znovu</button></div>`;
+  }
 }
 async function confirmOrd(id){
   if(!confirm('Potvrzuješ přijetí účtu? Platba bude uvolněna prodejci.'))return;
@@ -2028,15 +2636,18 @@ async function delL(id){
 }
 function updateProf(){
   if(!user)return;
-  document.getElementById('pav').textContent=user.email.substring(0,2).toUpperCase();
   document.getElementById('pem').textContent=user.email;
   document.getElementById('psince').textContent='Člen od '+new Date(user.created_at).toLocaleDateString('cs-CZ',{year:'numeric',month:'long'});
+  // Set initials fallback
+  const pav=document.getElementById('pav');
+  if(pav) pav.textContent=user.email.substring(0,2).toUpperCase();
 }
 function swDash(tab,el){
   document.querySelectorAll('.dtab').forEach(t=>t.classList.remove('on'));el.classList.add('on');
   document.getElementById('dt-l').classList.toggle('h',tab!=='listings');
   document.getElementById('dt-o').classList.toggle('h',tab!=='orders');
   document.getElementById('dt-p').classList.toggle('h',tab!=='profile');
+  if(tab==='profile') loadProfile();
 }
 
 // ADD LISTING
@@ -2150,7 +2761,126 @@ function toast(msg,type='success'){
   setTimeout(()=>t.classList.remove('show'),3500);
 }
 
+// MOBILE NAV
+function toggleMobileNav(){
+  const nav=document.getElementById('mobile-nav');
+  const btn=document.getElementById('hamburger');
+  const isOpen=nav.classList.contains('open');
+  nav.classList.toggle('open',!isOpen);
+  btn.classList.toggle('open',!isOpen);
+}
+function closeMobileNav(){
+  document.getElementById('mobile-nav').classList.remove('open');
+  document.getElementById('hamburger').classList.remove('open');
+}
+// Close mobile nav on outside click
+document.addEventListener('click',e=>{
+  const nav=document.getElementById('mobile-nav');
+  const btn=document.getElementById('hamburger');
+  if(nav.classList.contains('open')&&!nav.contains(e.target)&&!btn.contains(e.target)){
+    closeMobileNav();
+  }
+});
+
+// LISTING DETAIL PAGE
+let currentDetailListing=null;
+function openListingDetail(listing){
+  currentDetailListing=listing;
+  const color=platformColor(listing.platform);
+
+  // Breadcrumb
+  document.getElementById('ld-breadcrumb').textContent=`ulovprofil.cz / ${listing.platform.toLowerCase()} / #${listing.id}`;
+
+  // Gallery
+  const gallInner=document.getElementById('ld-gallery-inner');
+  const gallEmpty=document.getElementById('ld-gallery-empty');
+  const gallNav=document.getElementById('ld-gallery-nav');
+  gallInner.innerHTML='';gallNav.innerHTML='';
+  if(listing.photos&&listing.photos.length>0){
+    gallEmpty.style.display='none';
+    gallNav.classList.remove('h');
+    listing.photos.forEach((src,i)=>{
+      gallInner.innerHTML+=`<div style="min-width:100%;height:100%;background:var(--bg3);display:flex;align-items:center;justify-content:center"><img src="${src}" style="max-width:100%;max-height:100%;object-fit:contain"></div>`;
+      gallNav.innerHTML+=`<div onclick="ldGallSlide(${i})" style="width:8px;height:8px;border-radius:50%;background:${i===0?'var(--white)':'rgba(255,255,255,.3)'};cursor:pointer;transition:background .2s" id="ld-dot-${i}"></div>`;
+    });
+    if(listing.photos.length===1)gallNav.classList.add('h');
+  }else{
+    gallEmpty.style.display='flex';gallNav.classList.add('h');
+  }
+  document.getElementById('ld-platform-badge').innerHTML=`<span class="pt ${ptC(listing.platform)}">${listing.platform}</span>`;
+
+  // Content
+  document.getElementById('ld-followers').textContent=listing.followers;
+  document.getElementById('ld-niche').textContent=listing.niche;
+  document.getElementById('ld-platform-name').textContent=listing.platform;
+
+  const age=listing.account_age?`<div class="ds"><div class="dk">Stáří účtu</div><div class="dv">${listing.account_age}</div></div>`:'';
+  const aud=listing.audience?`<div class="ds"><div class="dk">Publikum</div><div class="dv">${listing.audience}</div></div>`:'';
+  const views=listing.avg_views?`<div class="ds"><div class="dk">Průměr views</div><div class="dv">${listing.avg_views}</div></div>`:'';
+  document.getElementById('ld-stats').innerHTML=`
+    <div class="ds"><div class="dk">Platforma</div><div class="dv">${listing.platform}</div></div>
+    <div class="ds"><div class="dk">Followeři</div><div class="dv">${listing.followers}</div></div>
+    ${listing.engagement?`<div class="ds"><div class="dk">Engagement</div><div class="dv">${listing.engagement}</div></div>`:''}
+    ${age}${aud}${views}
+  `;
+
+  // Engagement bar
+  if(listing.engagement){
+    const val=parseFloat(listing.engagement)||0;
+    const pct=Math.min(val/15*100,100);
+    const engColor=val<2?'#666':val<5?'#f59e0b':val<10?'#FF5500':'#22c55e';
+    const label=val<2?'Nízký':val<5?'Průměrný':val<10?'Vysoký':'Výjimečný';
+    document.getElementById('ld-eng-val').innerHTML=`${listing.engagement} <span style="font-size:10px;color:var(--g2)">${label}</span>`;
+    document.getElementById('ld-eng-fill').style.cssText=`width:${pct}%;background:linear-gradient(90deg,${engColor},${engColor}aa)`;
+    document.getElementById('ld-eng-wrap').style.display='block';
+  }else{
+    document.getElementById('ld-eng-wrap').style.display='none';
+  }
+
+  // Description
+  if(listing.description){
+    document.getElementById('ld-desc').textContent=listing.description;
+    document.getElementById('ld-desc-wrap').style.display='block';
+  }else{
+    document.getElementById('ld-desc-wrap').style.display='none';
+  }
+
+  // Pricing
+  const base=parseInt(listing.price);
+  const fee=Math.round(base*0.07);
+  const total=base+fee;
+  document.getElementById('ld-price-big').textContent=fp(total)+' Kč';
+  document.getElementById('ld-base-price').textContent=fp(base)+' Kč';
+  document.getElementById('ld-fee-price').textContent=fp(fee)+' Kč';
+  document.getElementById('ld-total-price').textContent=fp(total)+' Kč';
+  document.getElementById('ld-verified').textContent=`ID #${listing.id}`;
+
+  // Grid responsive on mobile
+  const grid=document.getElementById('ld-grid');
+  if(window.innerWidth<=720){grid.style.gridTemplateColumns='1fr';}
+  else{grid.style.gridTemplateColumns='1fr 340px';}
+
+  go('listing');
+
+  // Load seller reviews async
+  loadReviewsForSeller(listing.seller_email,'ld-reviews-list','ld-seller-rating');
+}
+
+function ldGallSlide(i){
+  document.getElementById('ld-gallery-inner').style.transform=`translateX(-${i*100}%)`;
+  document.querySelectorAll('[id^="ld-dot-"]').forEach((d,j)=>{d.style.background=j===i?'var(--white)':'rgba(255,255,255,.3)';});
+}
+
+function ldGoCheckout(){
+  if(!user){go('auth');return;}
+  if(!currentDetailListing){return;}
+  selL=currentDetailListing;
+  go('checkout');
+}
+
 init();
 </script>
+<!-- Vercel Analytics -->
+<script defer src="/_vercel/insights/script.js"></script>
 </body>
 </html>
