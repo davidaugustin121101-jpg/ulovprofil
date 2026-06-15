@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /dashboard
+Disallow: /admin
+Disallow: /checkout
+Disallow: /success
+Disallow: /auth
+
+Sitemap: https://ulovprofil.cz/sitemap.xml
