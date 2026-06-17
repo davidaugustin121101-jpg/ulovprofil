@@ -2051,50 +2051,10 @@ const SB_URL='https://fxrunjsazeznepkdmjxk.supabase.co';
 const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ4cnVuanNhemV6bmVwa2RtanhrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE0ODY2NzAsImV4cCI6MjA5NzA2MjY3MH0.F6ZAiuARAAWcfJh3ZMeggEk-wVN7GjddepVBBRjVR_c';
 // Stripe klíč odstraněn — platby probíhají přes bankovní převod
 const ADMIN='davidaugustin1211@seznam.cz';
-
-// ─────────────────────────────────────────────────────────────────────────────
 const {createClient}=supabase;
 const sb=createClient(SB_URL,SB_KEY);
 
-function isAdminUser(u){
-  if(!u) return false;
-  return u.email===ADMIN;
-}
 
-// ── Bezpečnostní helper funkce (po inicializaci sb) ──────────────────────────
-
-/** Sanitizace HTML — zabrání XSS při vkládání dat z DB do innerHTML */
-function escHtml(str){
-  if(!str) return '';
-  return String(str)
-    .replace(/&/g,'&amp;')
-    .replace(/</g,'&lt;')
-    .replace(/>/g,'&gt;')
-    .replace(/"/g,'&quot;')
-    .replace(/'/g,'&#39;');
-}
-
-/** Načte nickname prodejce z profiles tabulky — nikdy nevrací email */
-async function getSellerNickname(userId, fallbackEmail){
-  if(userId){
-    try{
-      const{data}=await sb.from('profiles').select('username').eq('user_id',userId).single();
-      if(data?.username) return data.username;
-    }catch(e){}
-  }
-  return 'Prodejce_' + (fallbackEmail||'UP').substring(0,3).toUpperCase();
-}
-
-/** Whitelist povolených domén pro obrázky — zabrání URL injection */
-function isSafeImgUrl(url){
-  if(!url||typeof url!=='string') return false;
-  const allowed=['fxrunjsazeznepkdmjxk.supabase.co','supabase.co'];
-  if(url.startsWith('data:image/')) return true;
-  try{
-    const u=new URL(url);
-    return (u.protocol==='https:') && allowed.some(d=>u.hostname.endsWith(d));
-  }catch(e){return false;}
-}
 
 let user=null,allL=[],activeF='',detail=null,chListing=null;
 // Payment state (bankovní převod)
@@ -2140,7 +2100,7 @@ function go(page,sub){
     ensureSpherePlay();
     document.getElementById('nl-home')?.classList.add('on');
   }else if(page==='auth'){
-    if(user){go(isAdminUser(user)?'admin':'dashboard');return;}
+    if(user){go(user?.email===ADMIN?'admin':'dashboard');return;}
     switchPage('page-auth');if(sub)swAuth(sub);
   }else if(page==='dashboard'){
     if(!user){go('auth');return;}
@@ -2154,7 +2114,7 @@ function go(page,sub){
   }else if(page==='success'){switchPage('page-success');}
   else if(page==='admin'){
     if(!user){toast('Nemáš admin přístup','error');go('home');return;}
-    if(!isAdminUser(user)){toast('Nemáš admin přístup','error');go('home');return;}
+    if(!user||user.email!==ADMIN){toast('Nemáš admin přístup','error');go('home');return;}
     switchPage('page-admin');loadAdmin();
   }
   else if(page==='valuator'){
@@ -2212,7 +2172,7 @@ async function doLogin(){
   if(error){showMsg(msg,'Špatný e-mail nebo heslo');return;}
   toast('Přihlášení úspěšné 👋','success');
   // Verifikuj admin roli a přesměruj
-  go(isAdminUser(user)?'admin':'dashboard');
+  go(user?.email===ADMIN?'admin':'dashboard');
 }
 // AVATAR HELPERS
 let regAvatarData = null;
@@ -2303,9 +2263,7 @@ function openReviewModal(transactionId, sellerEmail, listingInfo){
   setStars(0);
   document.getElementById('rev-text').value='';
   document.getElementById('rev-msg').classList.add('h');
-  // Zobraz nickname místo emailu prodejce
-  const revNick=await getSellerNickname(null, sellerEmail);
-  document.getElementById('rev-target-info').innerHTML=`Hodnotíš prodejce: <strong style="color:var(--orange)">${escHtml(revNick)}</strong><br><span style="font-size:11px;color:var(--g2)">${escHtml(listingInfo||'')}</span>`;
+  document.getElementById('rev-target-info').innerHTML=`Hodnotíš prodejce: <strong style="color:var(--orange)">${sellerEmail||'—'}</strong><br><span style="font-size:11px;color:var(--g2)">${listingInfo||''}</span>`;
   openMo('mo-review');
 }
 
@@ -2706,8 +2664,7 @@ function openModal(id){
   const photos=l.photos||[];
   if(photos.length>0){
     empty.style.display='none';
-    const safePhotos=photos.filter(src=>isSafeImgUrl(src));
-    inner.innerHTML=safePhotos.map(src=>`<img src="${escHtml(src)}" style="min-width:100%;height:220px;object-fit:cover;flex-shrink:0" onerror="this.style.display='none'">`).join('');
+    inner.innerHTML=photos.map(src=>`<img src="${src}" style="min-width:100%;height:220px;object-fit:cover;flex-shrink:0">`).join('');
     if(photos.length>1){
       nav.classList.remove('h');
       nav.innerHTML=photos.map((_,i)=>`<div onclick="slideGallery(${i})" style="width:6px;height:6px;border-radius:50%;background:${i===0?'#fff':'rgba(255,255,255,.4)'};cursor:pointer;transition:background .2s" id="gd-${i}"></div>`).join('');
@@ -2721,7 +2678,7 @@ function openModal(id){
   }
 
   // Platform badge
-  document.getElementById('md-platform-badge').innerHTML=`<span class="pt ${ptC(l.platform)}" style="font-size:11px;padding:4px 10px">${escHtml(l.platform)}</span>`;
+  document.getElementById('md-platform-badge').innerHTML=`<span class="pt ${ptC(l.platform)}" style="font-size:11px;padding:4px 10px">${l.platform}</span>`;
 
   // Content
   document.getElementById('md-f').textContent=l.followers;
@@ -2740,7 +2697,7 @@ function openModal(id){
   const pct=Math.min(eng/15*100,100);
   const engColor=eng<2?'#666':eng<5?'#f59e0b':eng<10?'var(--orange)':'#22c55e';
   const engLabel=eng<2?'Nízký':eng<5?'Průměrný':eng<10?'Vysoký':'Výjimečný';
-  document.getElementById('md-eng-val').innerHTML=`<span style="color:${engColor}">${escHtml(l.engagement)||'—'}</span> <span style="font-size:10px;color:var(--g2)">${escHtml(engLabel)}</span>`;
+  document.getElementById('md-eng-val').innerHTML=`<span style="color:${engColor}">${l.engagement||'—'}</span> <span style="font-size:10px;color:var(--g2)">${engLabel}</span>`;
   document.getElementById('md-eng-fill').style.cssText=`width:${pct}%;background:linear-gradient(90deg,${engColor},${engColor}88)`;
 
   // Mini bars
@@ -2752,10 +2709,8 @@ function openModal(id){
   document.getElementById('md-bars').innerHTML=bars.join('');
 
   document.getElementById('md-desc').textContent=l.description||'Prodejce nepřidal popis.';
-  // Načti nickname prodejce z profiles — nezobrazuj email
-  const sellerDisplay=await getSellerNickname(l.user_id, l.seller_email);
-  const ini=sellerDisplay.substring(0,2).toUpperCase();
-  document.getElementById('md-seller').innerHTML=`<div class="sav">${escHtml(ini)}</div><div><div class="sn">${escHtml(sellerDisplay)}</div><div class="sm">◉ Ověřený účet · UlovProfil</div></div>`;
+  const ini=(l.seller_email||'UP').substring(0,2).toUpperCase();
+  document.getElementById('md-seller').innerHTML=`<div class="sav">${ini}</div><div><div class="sn">${l.seller_email||'Ověřený prodejce'}</div><div class="sm">◉ Ověřený účet · UlovProfil</div></div>`;
   document.getElementById('md-price').textContent=fp(Math.round(parseInt(l.price)*1.15))+' Kč';
   openMo('mo-detail');
 }
@@ -2787,7 +2742,7 @@ function genVS(){
 
 function fillSum(l){
   const base=parseInt(l.price),fee=Math.round(base*.15),tot=base+fee;
-  document.getElementById('sum-ptag').innerHTML=`<span class="pt ${ptC(l.platform)}">${escHtml(l.platform)}</span>`;
+  document.getElementById('sum-ptag').innerHTML=`<span class="pt ${ptC(l.platform)}">${l.platform}</span>`;
   document.getElementById('sum-f').textContent=l.followers;
   document.getElementById('sum-n').textContent=(l.niche+(l.audience?' / '+l.audience:'')).toUpperCase();
   document.getElementById('sum-st').innerHTML=`
@@ -3420,7 +3375,7 @@ async function submitAdd(){
 
 // ADMIN
 async function loadAdmin(){
-  if(!isAdminUser(user)){toast('Nemáš admin přístup','error');go('home');return;}
+  if(!user||user.email!==ADMIN){toast('Nemáš admin přístup','error');go('home');return;}
   const{data}=await sb.from('listings').select('id,user_id,seller_email,platform,followers,niche,price,engagement,status,created_at,reserved_order_id').order('created_at',{ascending:false});
   admL=data||[];
   const p=admL.filter(l=>l.status==='pending').length;
@@ -3528,19 +3483,18 @@ function openListingDetail(listing){
   const gallEmpty=document.getElementById('ld-gallery-empty');
   const gallNav=document.getElementById('ld-gallery-nav');
   gallInner.innerHTML='';gallNav.innerHTML='';
-  const safeListingPhotos=(listing.photos||[]).filter(src=>isSafeImgUrl(src));
-  if(safeListingPhotos.length>0){
+  if(listing.photos&&listing.photos.length>0){
     gallEmpty.style.display='none';
     gallNav.classList.remove('h');
     safeListingPhotos.forEach((src,i)=>{
-      gallInner.innerHTML+=`<div style="min-width:100%;height:100%;background:var(--bg3);display:flex;align-items:center;justify-content:center"><img src="${escHtml(src)}" style="max-width:100%;max-height:100%;object-fit:contain" onerror="this.style.display='none'"></div>`;
+      gallInner.innerHTML+=`<div style="min-width:100%;height:100%;background:var(--bg3);display:flex;align-items:center;justify-content:center"><img src="${src}" style="max-width:100%;max-height:100%;object-fit:contain" onerror="this.style.display='none'"></div>`;
       gallNav.innerHTML+=`<div onclick="ldGallSlide(${i})" style="width:8px;height:8px;border-radius:50%;background:${i===0?'var(--white)':'rgba(255,255,255,.3)'};cursor:pointer;transition:background .2s" id="ld-dot-${i}"></div>`;
     });
     if(safeListingPhotos.length===1)gallNav.classList.add('h');
   }else{
     gallEmpty.style.display='flex';gallNav.classList.add('h');
   }
-  document.getElementById('ld-platform-badge').innerHTML=`<span class="pt ${ptC(listing.platform)}">${escHtml(listing.platform)}</span>`;
+  document.getElementById('ld-platform-badge').innerHTML=`<span class="pt ${ptC(listing.platform)}">${listing.platform}</span>`;
 
   // Content
   document.getElementById('ld-followers').textContent=listing.followers;
@@ -3563,7 +3517,7 @@ function openListingDetail(listing){
     const pct=Math.min(val/15*100,100);
     const engColor=val<2?'#666':val<5?'#f59e0b':val<10?'#FF5500':'#22c55e';
     const label=val<2?'Nízký':val<5?'Průměrný':val<10?'Vysoký':'Výjimečný';
-    document.getElementById('ld-eng-val').innerHTML=`${escHtml(listing.engagement)} <span style="font-size:10px;color:var(--g2)">${escHtml(label)}</span>`;
+    document.getElementById('ld-eng-val').innerHTML=`${listing.engagement} <span style="font-size:10px;color:var(--g2)">${label}</span>`;
     document.getElementById('ld-eng-fill').style.cssText=`width:${pct}%;background:linear-gradient(90deg,${engColor},${engColor}aa)`;
     document.getElementById('ld-eng-wrap').style.display='block';
   }else{
@@ -3617,10 +3571,10 @@ function openListingDetail(listing){
         }
         sellerNameEl.textContent=prof.username||'Ověřený prodejce';
       } else {
-        sellerNameEl.textContent='Ověřený prodejce';
+        sellerNameEl.textContent=listing.seller_email||'Ověřený prodejce';
       }
     }catch(e){
-      sellerNameEl.textContent='Ověřený prodejce';
+      sellerNameEl.textContent=listing.seller_email||'Ověřený prodejce';
     }
   })();
 
