@@ -2056,13 +2056,9 @@ const ADMIN='davidaugustin1211@seznam.cz';
 const {createClient}=supabase;
 const sb=createClient(SB_URL,SB_KEY);
 
-async function isAdminUser(u){
+function isAdminUser(u){
   if(!u) return false;
-  if(u.email===ADMIN) return true;
-  try{
-    const{data}=await sb.auth.getUser();
-    return data?.user?.app_metadata?.role==='admin';
-  }catch(e){return false;}
+  return u.email===ADMIN;
 }
 
 // ── Bezpečnostní helper funkce (po inicializaci sb) ──────────────────────────
@@ -2105,19 +2101,15 @@ let user=null,allL=[],activeF='',detail=null,chListing=null;
 let admL=[],admF='pending';
 
 async function init(){
-  const ls=document.getElementById('ls');
   try{
     const {data:{session}}=await sb.auth.getSession();
     if(session){user=session.user;setNavU(user);}else setNavG();
     sb.auth.onAuthStateChange((_,s)=>{user=s?.user||null;user?setNavU(user):setNavG();});
-  }catch(e){
-    console.warn('Supabase init error:',e);
-    setNavG();
-  }finally{
-    ls.style.opacity='0';setTimeout(()=>ls.style.display='none',300);
-    go('home');
-    loadPub();
-  }
+  }catch(e){setNavG();}
+  document.getElementById('ls').style.opacity='0';
+  setTimeout(()=>document.getElementById('ls').style.display='none',300);
+  go('home');
+  loadPub();
 }
 
 function setNavU(u){
@@ -2148,7 +2140,7 @@ function go(page,sub){
     ensureSpherePlay();
     document.getElementById('nl-home')?.classList.add('on');
   }else if(page==='auth'){
-    if(user){isAdminUser(user).then(ok=>go(ok?'admin':'dashboard'));return;}
+    if(user){go(isAdminUser(user)?'admin':'dashboard');return;}
     switchPage('page-auth');if(sub)swAuth(sub);
   }else if(page==='dashboard'){
     if(!user){go('auth');return;}
@@ -2162,11 +2154,8 @@ function go(page,sub){
   }else if(page==='success'){switchPage('page-success');}
   else if(page==='admin'){
     if(!user){toast('Nemáš admin přístup','error');go('home');return;}
-    isAdminUser(user).then(ok=>{
-      if(!ok){toast('Nemáš admin přístup','error');go('home');return;}
-      switchPage('page-admin');loadAdmin();
-    });
-    return;
+    if(!isAdminUser(user)){toast('Nemáš admin přístup','error');go('home');return;}
+    switchPage('page-admin');loadAdmin();
   }
   else if(page==='valuator'){
     switchPage('page-valuator');
@@ -2223,7 +2212,7 @@ async function doLogin(){
   if(error){showMsg(msg,'Špatný e-mail nebo heslo');return;}
   toast('Přihlášení úspěšné 👋','success');
   // Verifikuj admin roli a přesměruj
-  isAdminUser(user).then(ok=>go(ok?'admin':'dashboard'));
+  go(isAdminUser(user)?'admin':'dashboard');
 }
 // AVATAR HELPERS
 let regAvatarData = null;
@@ -3431,8 +3420,7 @@ async function submitAdd(){
 
 // ADMIN
 async function loadAdmin(){
-  const adminOk=await isAdminUser(user);
-  if(!adminOk){toast('Nemáš admin přístup','error');go('home');return;}
+  if(!isAdminUser(user)){toast('Nemáš admin přístup','error');go('home');return;}
   const{data}=await sb.from('listings').select('id,user_id,seller_email,platform,followers,niche,price,engagement,status,created_at,reserved_order_id').order('created_at',{ascending:false});
   admL=data||[];
   const p=admL.filter(l=>l.status==='pending').length;
