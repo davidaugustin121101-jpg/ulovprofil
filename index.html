@@ -1027,7 +1027,13 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;height:56px;display:flex;ali
       </div>
       <div id="af-li">
         <div class="fg"><label class="fl">E-mail</label><input type="email" class="fi" id="li-e" placeholder="vas@email.cz"></div>
-        <div class="fg"><label class="fl">Heslo</label><input type="password" class="fi" id="li-p" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"></div>
+        <div class="fg">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+            <label class="fl" style="margin-bottom:0">Heslo</label>
+            <a href="/zapomenute-heslo.html" style="font-family:var(--mono);font-size:10px;color:var(--g2);text-decoration:none;letter-spacing:.04em" onmouseover="this.style.color='var(--orange)'" onmouseout="this.style.color='var(--g2)'">Zapomenuté heslo?</a>
+          </div>
+          <input type="password" class="fi" id="li-p" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
+        </div>
         <button class="bfull" onclick="doLogin()" id="btn-li">Přihlásit se</button>
         <div class="fmsg err h" id="li-msg"></div>
         <div class="asw">Nemáš účet? <a onclick="swAuth('register')">Zaregistruj se</a></div>
@@ -2043,9 +2049,61 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;height:56px;display:flex;ali
 <script>
 const SB_URL='https://fxrunjsazeznepkdmjxk.supabase.co';
 const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ4cnVuanNhemV6bmVwa2RtanhrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE0ODY2NzAsImV4cCI6MjA5NzA2MjY3MH0.F6ZAiuARAAWcfJh3ZMeggEk-wVN7GjddepVBBRjVR_c';
-const SK='pk_live_51TiU713fEOdPLX2Lhzs0ReqQWEIDfAJ3oPjTSjmQiuKPwgX2wtt6Q5ewgWLoc1bxgrV1LSKnkB7BfwfEumAIdEhB00Wy4IrMGO';
+// Stripe klíč odstraněn — platby probíhají přes bankovní převod
+// Admin email pro základní UI check (nezabraňuje přístupu k datům — to řeší RLS)
 const ADMIN='davidaugustin1211@seznam.cz';
+// Serverová verifikace admin role přes Supabase user metadata
+async function isAdminUser(u){
+  if(!u) return false;
+  if(u.email===ADMIN) return true;
+  // Záložní check přes user metadata (nastav v Supabase Dashboard → Authentication → Users → Edit user → app_metadata: {"role":"admin"})
+  try{
+    const{data}=await sb.auth.getUser();
+    return data?.user?.app_metadata?.role==='admin';
+  }catch(e){return false;}
+}
 
+// ── Bezpečnostní helper funkce ───────────────────────────────────────────────
+
+/** Sanitizace HTML — zabrání XSS při vkládání dat z DB do innerHTML */
+function escHtml(str){
+  if(!str) return '';
+  return String(str)
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;')
+    .replace(/'/g,'&#39;');
+}
+
+/** Načte nickname prodejce z profiles tabulky — nikdy nevrací email */
+async function getSellerNickname(userId, fallbackEmail){
+  if(userId){
+    try{
+      const{data}=await sb.from('profiles').select('username').eq('user_id',userId).single();
+      if(data?.username) return data.username;
+    }catch(e){}
+  }
+  // Fallback: pokud nemá nickname, zobraz anonymní označení
+  return 'Prodejce_' + (fallbackEmail||'UP').substring(0,3).toUpperCase();
+}
+
+/** Whitelist povolených domén pro obrázky — zabrání URL injection */
+function isSafeImgUrl(url){
+  if(!url||typeof url!=='string') return false;
+  // Povoleny pouze: Supabase Storage, data:image base64
+  const allowed=[
+    'fxrunjsazeznepkdmjxk.supabase.co',
+    'supabase.co'
+  ];
+  if(url.startsWith('data:image/')) return true;
+  try{
+    const u=new URL(url);
+    return (u.protocol==='https:') && allowed.some(d=>u.hostname.endsWith(d));
+  }catch(e){return false;}
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 const {createClient}=supabase;
 const sb=createClient(SB_URL,SB_KEY);
 
@@ -2091,7 +2149,7 @@ function go(page,sub){
     ensureSpherePlay();
     document.getElementById('nl-home')?.classList.add('on');
   }else if(page==='auth'){
-    if(user){go(user.email===ADMIN?'admin':'dashboard');return;}
+    if(user){isAdminUser(user).then(ok=>go(ok?'admin':'dashboard'));return;}
     switchPage('page-auth');if(sub)swAuth(sub);
   }else if(page==='dashboard'){
     if(!user){go('auth');return;}
@@ -2104,8 +2162,12 @@ function go(page,sub){
     switchPage('page-checkout');
   }else if(page==='success'){switchPage('page-success');}
   else if(page==='admin'){
-    if(!user||user.email!==ADMIN){toast('Nemáš admin přístup','error');go('home');return;}
-    switchPage('page-admin');loadAdmin();
+    if(!user){toast('Nemáš admin přístup','error');go('home');return;}
+    isAdminUser(user).then(ok=>{
+      if(!ok){toast('Nemáš admin přístup','error');go('home');return;}
+      switchPage('page-admin');loadAdmin();
+    });
+    return;
   }
   else if(page==='valuator'){
     switchPage('page-valuator');
@@ -2161,7 +2223,8 @@ async function doLogin(){
   btn.disabled=false;btn.textContent='Přihlásit se';
   if(error){showMsg(msg,'Špatný e-mail nebo heslo');return;}
   toast('Přihlášení úspěšné 👋','success');
-  go(user?.email===ADMIN?'admin':'dashboard');
+  // Verifikuj admin roli a přesměruj
+  isAdminUser(user).then(ok=>go(ok?'admin':'dashboard'));
 }
 // AVATAR HELPERS
 let regAvatarData = null;
@@ -2214,7 +2277,7 @@ async function saveProfile(){
 async function loadProfile(){
   if(!user)return;
   try{
-    const{data}=await sb.from('profiles').select('*').eq('user_id',user.id).single();
+    const{data}=await sb.from('profiles').select('username,avatar_url,bio').eq('user_id',user.id).single();
     if(data){
       if(data.username){
         document.getElementById('prof-name').value=data.username;
@@ -2252,7 +2315,9 @@ function openReviewModal(transactionId, sellerEmail, listingInfo){
   setStars(0);
   document.getElementById('rev-text').value='';
   document.getElementById('rev-msg').classList.add('h');
-  document.getElementById('rev-target-info').innerHTML=`Hodnotíš prodejce: <strong style="color:var(--orange)">${sellerEmail||'—'}</strong><br><span style="font-size:11px;color:var(--g2)">${listingInfo||''}</span>`;
+  // Zobraz nickname místo emailu prodejce
+  const revNick=await getSellerNickname(null, sellerEmail);
+  document.getElementById('rev-target-info').innerHTML=`Hodnotíš prodejce: <strong style="color:var(--orange)">${escHtml(revNick)}</strong><br><span style="font-size:11px;color:var(--g2)">${escHtml(listingInfo||'')}</span>`;
   openMo('mo-review');
 }
 
@@ -2294,7 +2359,7 @@ function renderStars(n){
 async function loadReviewsForSeller(sellerEmail, containerId, ratingBadgeId){
   if(!sellerEmail) return;
   try{
-    const{data}=await sb.from('reviews').select('*').eq('reviewee_email',sellerEmail).order('created_at',{ascending:false});
+    const{data}=await sb.from('reviews').select('id,rating,comment,reviewer_nickname,created_at,listing_info').eq('reviewee_email',sellerEmail).order('created_at',{ascending:false});
     const reviews=data||[];
     const el=document.getElementById(containerId);
     if(!reviews.length){
@@ -2376,7 +2441,7 @@ function renderSkeletons(count=6){
 async function loadPub(){
   renderSkeletons();
   try{
-    const{data,error}=await sb.from('listings').select('*').eq('status','active').order('created_at',{ascending:false});
+    const{data,error}=await sb.from('listings').select('id,user_id,platform,followers,niche,price,engagement,audience,account_age,description,photos,status,created_at').eq('status','active').order('created_at',{ascending:false});
     if(error){
       console.error('loadPub Supabase error:', error.message, error.code, error.details, error.hint);
       throw new Error(error.message||error.code||'Supabase error');
@@ -2653,7 +2718,8 @@ function openModal(id){
   const photos=l.photos||[];
   if(photos.length>0){
     empty.style.display='none';
-    inner.innerHTML=photos.map(src=>`<img src="${src}" style="min-width:100%;height:220px;object-fit:cover;flex-shrink:0">`).join('');
+    const safePhotos=photos.filter(src=>isSafeImgUrl(src));
+    inner.innerHTML=safePhotos.map(src=>`<img src="${escHtml(src)}" style="min-width:100%;height:220px;object-fit:cover;flex-shrink:0" onerror="this.style.display='none'">`).join('');
     if(photos.length>1){
       nav.classList.remove('h');
       nav.innerHTML=photos.map((_,i)=>`<div onclick="slideGallery(${i})" style="width:6px;height:6px;border-radius:50%;background:${i===0?'#fff':'rgba(255,255,255,.4)'};cursor:pointer;transition:background .2s" id="gd-${i}"></div>`).join('');
@@ -2667,7 +2733,7 @@ function openModal(id){
   }
 
   // Platform badge
-  document.getElementById('md-platform-badge').innerHTML=`<span class="pt ${ptC(l.platform)}" style="font-size:11px;padding:4px 10px">${l.platform}</span>`;
+  document.getElementById('md-platform-badge').innerHTML=`<span class="pt ${ptC(l.platform)}" style="font-size:11px;padding:4px 10px">${escHtml(l.platform)}</span>`;
 
   // Content
   document.getElementById('md-f').textContent=l.followers;
@@ -2686,7 +2752,7 @@ function openModal(id){
   const pct=Math.min(eng/15*100,100);
   const engColor=eng<2?'#666':eng<5?'#f59e0b':eng<10?'var(--orange)':'#22c55e';
   const engLabel=eng<2?'Nízký':eng<5?'Průměrný':eng<10?'Vysoký':'Výjimečný';
-  document.getElementById('md-eng-val').innerHTML=`<span style="color:${engColor}">${l.engagement||'—'}</span> <span style="font-size:10px;color:var(--g2)">${engLabel}</span>`;
+  document.getElementById('md-eng-val').innerHTML=`<span style="color:${engColor}">${escHtml(l.engagement)||'—'}</span> <span style="font-size:10px;color:var(--g2)">${escHtml(engLabel)}</span>`;
   document.getElementById('md-eng-fill').style.cssText=`width:${pct}%;background:linear-gradient(90deg,${engColor},${engColor}88)`;
 
   // Mini bars
@@ -2698,8 +2764,10 @@ function openModal(id){
   document.getElementById('md-bars').innerHTML=bars.join('');
 
   document.getElementById('md-desc').textContent=l.description||'Prodejce nepřidal popis.';
-  const ini=(l.seller_email||'UP').substring(0,2).toUpperCase();
-  document.getElementById('md-seller').innerHTML=`<div class="sav">${ini}</div><div><div class="sn">${l.seller_email||'Ověřený prodejce'}</div><div class="sm">◉ Ověřený účet · UlovProfil</div></div>`;
+  // Načti nickname prodejce z profiles — nezobrazuj email
+  const sellerDisplay=await getSellerNickname(l.user_id, l.seller_email);
+  const ini=sellerDisplay.substring(0,2).toUpperCase();
+  document.getElementById('md-seller').innerHTML=`<div class="sav">${escHtml(ini)}</div><div><div class="sn">${escHtml(sellerDisplay)}</div><div class="sm">◉ Ověřený účet · UlovProfil</div></div>`;
   document.getElementById('md-price').textContent=fp(Math.round(parseInt(l.price)*1.15))+' Kč';
   openMo('mo-detail');
 }
@@ -2731,7 +2799,7 @@ function genVS(){
 
 function fillSum(l){
   const base=parseInt(l.price),fee=Math.round(base*.15),tot=base+fee;
-  document.getElementById('sum-ptag').innerHTML=`<span class="pt ${ptC(l.platform)}">${l.platform}</span>`;
+  document.getElementById('sum-ptag').innerHTML=`<span class="pt ${ptC(l.platform)}">${escHtml(l.platform)}</span>`;
   document.getElementById('sum-f').textContent=l.followers;
   document.getElementById('sum-n').textContent=(l.niche+(l.audience?' / '+l.audience:'')).toUpperCase();
   document.getElementById('sum-st').innerHTML=`
@@ -2757,18 +2825,78 @@ function fillSum(l){
   setTimeout(()=>generateQR(tot, vs), 100);
 }
 
+// ── SPAYD / QR platba ────────────────────────────────────────────────────────
+
+/**
+ * Převod CZ čísla účtu + kód banky na validní IBAN (ISO 7064 MOD 97-10)
+ * Podporuje formát s předčíslím: '19-123456' nebo bez: '3666250018'
+ */
+function czAccountToIBAN(accountNumber, bankCode){
+  let prefix='000000', number=accountNumber;
+  if(accountNumber.includes('-')){[prefix,number]=accountNumber.split('-');}
+  prefix=prefix.padStart(6,'0');
+  number=number.padStart(10,'0');
+  bankCode=bankCode.padStart(4,'0');
+  // BBAN = kód banky (4) + předčíslí (6) + číslo účtu (10)
+  const bban=bankCode+prefix+number;
+  // MOD 97: přesuň 'CZ00' na konec (C=12, Z=35 → '123500')
+  const forMod=bban+'123500';
+  // Výpočet MOD 97 po blocích (JS čísla nejsou dost velká)
+  let rem='';
+  for(const d of forMod){
+    rem=(rem+d);
+    if(rem.length>9) rem=String(parseInt(rem)%97);
+  }
+  rem=parseInt(rem)%97;
+  const check=String(98-rem).padStart(2,'0');
+  return 'CZ'+check+bban;
+}
+
+/**
+ * Odstraní českou diakritiku — SPAYD nepodporuje háčky a čárky
+ */
+function stripDiacritics(str){
+  return str.normalize('NFD').replace(/[̀-ͯ]/g,'');
+}
+
+/**
+ * Sestaví validní SPAYD string pro české bankovní aplikace (AirBank, mBank, ČSOB…)
+ * Formát: SPD*1.0*ACC:IBAN*AM:CASTKA*CC:CZK*X-VS:VS*MSG:ZPRAVA
+ */
+function buildSPAYD(amount, vs, msg){
+  // Číslo účtu a kód banky z konstanty '3666250018/3030'
+  const [accNum, bankCode]=ULOVPROFIL_ACCOUNT.split('/');
+  const iban=czAccountToIBAN(accNum, bankCode);
+  // Částka: tečka jako oddělovač, max 2 des. místa, bez mezer
+  const amountStr=parseFloat(amount).toFixed(2);
+  // VS: max 10 číslic, pouze číslice
+  const vsClean=String(vs).replace(/\D/g,'').slice(0,10);
+  // Zpráva: bez diakritiky, max 35 znaků
+  const msgClean=stripDiacritics(String(msg)).replace(/[^A-Za-z0-9 .,!?#-]/g,'').slice(0,35);
+  return 'SPD*1.0*ACC:'+iban+'*AM:'+amountStr+'*CC:CZK*X-VS:'+vsClean+'*MSG:'+msgClean;
+}
+
+/**
+ * Vygeneruje QR kód do containeru pomocí qrcode.js (CDN)
+ * Používá validní SPAYD string — kompatibilní s AirBank, mBank, ČSOB, KB…
+ */
 function generateQR(amount, vs){
   const container=document.getElementById('qr-container');
-  if(!container)return;
-  // SPAYD format pro ceske bankovni aplikace
-  // AM musi mit tecku jako oddelovac desetin, bez mezer
-  const amountStr=amount.toFixed(2);
-  const spayd='SPD*1.0*ACC:'+ULOVPROFIL_ACCOUNT+'*AM:'+amountStr+'*CC:CZK*X-VS:'+vs+'*MSG:UlovProfil';
+  if(!container) return;
+  const spayd=buildSPAYD(amount, vs, 'UlovProfil #'+vs);
   container.innerHTML='';
   if(typeof QRCode!=='undefined'){
-    new QRCode(container,{text:spayd,width:160,height:160,colorDark:'#000',colorLight:'#fff',correctLevel:QRCode.CorrectLevel.M});
+    new QRCode(container,{
+      text:spayd,
+      width:180,
+      height:180,
+      colorDark:'#000000',
+      colorLight:'#ffffff',
+      correctLevel:QRCode.CorrectLevel.M
+    });
   } else {
-    container.innerHTML='<div style="width:160px;height:160px;display:flex;align-items:center;justify-content:center;background:#f0f0f0;border-radius:4px;font-size:12px;color:#333;text-align:center;padding:10px">VS:<br><strong style="font-size:20px">'+vs+'</strong></div>';
+    // Fallback: zobraz VS pokud QRCode.js nenačten
+    container.innerHTML='<div style="width:180px;height:180px;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#f5f5f5;border-radius:8px;font-size:12px;color:#333;text-align:center;gap:6px"><span>VS:</span><strong style="font-size:24px;letter-spacing:.05em">'+vs+'</strong><span style="font-size:10px;color:#888">Zadej ručně při platbě</span></div>';
   }
 }
 async function doPay(){
@@ -2826,7 +2954,7 @@ async function loadDash(){
   if(!user)return;
   updateProf();
   try{
-    const{data,error}=await sb.from('listings').select('*').eq('user_id',user.id).order('created_at',{ascending:false});
+    const{data,error}=await sb.from('listings').select('id,user_id,platform,followers,niche,price,engagement,audience,account_age,description,photos,status,created_at,seller_email').eq('user_id',user.id).order('created_at',{ascending:false});
     if(error)throw error;
     const list=data||[];
     document.getElementById('ds-t').textContent=list.length;
@@ -2874,7 +3002,7 @@ async function loadDash(){
     document.getElementById('my-grid').innerHTML=`<div class="err-banner" style="grid-column:1/-1">⚠️ Nepodařilo se načíst nabídky.<button onclick="loadDash()">Zkusit znovu</button></div>`;
   }
   try{
-    const{data:ords,error:oErr}=await sb.from('transactions').select('*').eq('buyer_id',user.id).order('created_at',{ascending:false});
+    const{data:ords,error:oErr}=await sb.from('transactions').select('id,listing_id,listing_platform,listing_followers,listing_niche,amount,fee,status,variable_symbol,created_at').eq('buyer_id',user.id).order('created_at',{ascending:false});
     if(oErr)throw oErr;
     const og=document.getElementById('ord-grid');
     if(!ords||!ords.length){og.innerHTML=`<div class="empty"><div class="ei">🛒</div><div class="et">Žádné nákupy</div><div class="ed">Prohlédni nabídky v marketplace.</div><button class="bsm bsm-o" onclick="go('home')" style="margin-top:4px">Prohlédnout →</button></div>`;return;}
@@ -3304,8 +3432,9 @@ async function submitAdd(){
 
 // ADMIN
 async function loadAdmin(){
-  if(!user||user.email!==ADMIN){toast('Nemáš admin přístup','error');go('home');return;}
-  const{data}=await sb.from('listings').select('*').order('created_at',{ascending:false});
+  const adminOk=await isAdminUser(user);
+  if(!adminOk){toast('Nemáš admin přístup','error');go('home');return;}
+  const{data}=await sb.from('listings').select('id,user_id,seller_email,platform,followers,niche,price,engagement,status,created_at,reserved_order_id').order('created_at',{ascending:false});
   admL=data||[];
   const p=admL.filter(l=>l.status==='pending').length;
   const a=admL.filter(l=>l.status==='active').length;
@@ -3412,18 +3541,19 @@ function openListingDetail(listing){
   const gallEmpty=document.getElementById('ld-gallery-empty');
   const gallNav=document.getElementById('ld-gallery-nav');
   gallInner.innerHTML='';gallNav.innerHTML='';
-  if(listing.photos&&listing.photos.length>0){
+  const safeListingPhotos=(listing.photos||[]).filter(src=>isSafeImgUrl(src));
+  if(safeListingPhotos.length>0){
     gallEmpty.style.display='none';
     gallNav.classList.remove('h');
-    listing.photos.forEach((src,i)=>{
-      gallInner.innerHTML+=`<div style="min-width:100%;height:100%;background:var(--bg3);display:flex;align-items:center;justify-content:center"><img src="${src}" style="max-width:100%;max-height:100%;object-fit:contain"></div>`;
+    safeListingPhotos.forEach((src,i)=>{
+      gallInner.innerHTML+=`<div style="min-width:100%;height:100%;background:var(--bg3);display:flex;align-items:center;justify-content:center"><img src="${escHtml(src)}" style="max-width:100%;max-height:100%;object-fit:contain" onerror="this.style.display='none'"></div>`;
       gallNav.innerHTML+=`<div onclick="ldGallSlide(${i})" style="width:8px;height:8px;border-radius:50%;background:${i===0?'var(--white)':'rgba(255,255,255,.3)'};cursor:pointer;transition:background .2s" id="ld-dot-${i}"></div>`;
     });
-    if(listing.photos.length===1)gallNav.classList.add('h');
+    if(safeListingPhotos.length===1)gallNav.classList.add('h');
   }else{
     gallEmpty.style.display='flex';gallNav.classList.add('h');
   }
-  document.getElementById('ld-platform-badge').innerHTML=`<span class="pt ${ptC(listing.platform)}">${listing.platform}</span>`;
+  document.getElementById('ld-platform-badge').innerHTML=`<span class="pt ${ptC(listing.platform)}">${escHtml(listing.platform)}</span>`;
 
   // Content
   document.getElementById('ld-followers').textContent=listing.followers;
@@ -3446,7 +3576,7 @@ function openListingDetail(listing){
     const pct=Math.min(val/15*100,100);
     const engColor=val<2?'#666':val<5?'#f59e0b':val<10?'#FF5500':'#22c55e';
     const label=val<2?'Nízký':val<5?'Průměrný':val<10?'Vysoký':'Výjimečný';
-    document.getElementById('ld-eng-val').innerHTML=`${listing.engagement} <span style="font-size:10px;color:var(--g2)">${label}</span>`;
+    document.getElementById('ld-eng-val').innerHTML=`${escHtml(listing.engagement)} <span style="font-size:10px;color:var(--g2)">${escHtml(label)}</span>`;
     document.getElementById('ld-eng-fill').style.cssText=`width:${pct}%;background:linear-gradient(90deg,${engColor},${engColor}aa)`;
     document.getElementById('ld-eng-wrap').style.display='block';
   }else{
@@ -3483,7 +3613,7 @@ function openListingDetail(listing){
     const sellerAvEl=document.getElementById('ld-seller-av');
     const sellerNameEl=document.getElementById('ld-seller-name');
     // Výchozí stav
-    const ini=(listing.seller_email||'UP').substring(0,2).toUpperCase();
+    const ini='UP';
     sellerAvEl.textContent=ini;
     sellerNameEl.textContent='Načítám...';
     try{
@@ -3498,12 +3628,12 @@ function openListingDetail(listing){
         } else {
           sellerAvEl.textContent=ini;
         }
-        sellerNameEl.textContent=prof.username||listing.seller_email||'Ověřený prodejce';
+        sellerNameEl.textContent=prof.username||'Ověřený prodejce';
       } else {
-        sellerNameEl.textContent=listing.seller_email||'Ověřený prodejce';
+        sellerNameEl.textContent='Ověřený prodejce';
       }
     }catch(e){
-      sellerNameEl.textContent=listing.seller_email||'Ověřený prodejce';
+      sellerNameEl.textContent='Ověřený prodejce';
     }
   })();
 
@@ -4388,7 +4518,7 @@ function showValResults(){
   window.scrollTo(0,0);
 }
 
-const RESEND_KEY = 're_Zt13y4Sr_JMbGckssjCdMs4aZcAkJWjYW';
+// Resend klíč odstraněn z frontendu — emaily se odesílají přes /api/valuator-email
 
 async function submitGate(){
   const email = document.getElementById('v-gate-email').value.trim();
@@ -4487,18 +4617,18 @@ async function submitGate(){
 </body>
 </html>`;
 
+  // Email se odesílá přes serverless API endpoint (Resend klíč není ve frontendu)
   try {
-    await fetch('https://api.resend.com/emails', {
+    await fetch('/api/valuator-email', {
       method: 'POST',
-      headers: {
-        'Authorization': 'Bearer ' + RESEND_KEY,
-        'Content-Type': 'application/json'
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        from: 'UlovProfil <onboarding@resend.dev>',
-        to: [email],
-        subject: '💰 Hodnota tvého ' + platform + ' účtu: ' + rounded.toLocaleString('cs-CZ') + ' Kč',
-        html: emailHtml
+        to: email,
+        platform: platform,
+        amount: rounded,
+        low: low,
+        high: high,
+        followers: vState.followers
       })
     });
   } catch(e){}
