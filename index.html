@@ -2063,7 +2063,11 @@ async function isAdminUser(u){
   }catch(e){return false;}
 }
 
-// ── Bezpečnostní helper funkce ───────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+const {createClient}=supabase;
+const sb=createClient(SB_URL,SB_KEY);
+
+// ── Bezpečnostní helper funkce (po inicializaci sb) ──────────────────────────
 
 /** Sanitizace HTML — zabrání XSS při vkládání dat z DB do innerHTML */
 function escHtml(str){
@@ -2084,28 +2088,19 @@ async function getSellerNickname(userId, fallbackEmail){
       if(data?.username) return data.username;
     }catch(e){}
   }
-  // Fallback: pokud nemá nickname, zobraz anonymní označení
   return 'Prodejce_' + (fallbackEmail||'UP').substring(0,3).toUpperCase();
 }
 
 /** Whitelist povolených domén pro obrázky — zabrání URL injection */
 function isSafeImgUrl(url){
   if(!url||typeof url!=='string') return false;
-  // Povoleny pouze: Supabase Storage, data:image base64
-  const allowed=[
-    'fxrunjsazeznepkdmjxk.supabase.co',
-    'supabase.co'
-  ];
+  const allowed=['fxrunjsazeznepkdmjxk.supabase.co','supabase.co'];
   if(url.startsWith('data:image/')) return true;
   try{
     const u=new URL(url);
     return (u.protocol==='https:') && allowed.some(d=>u.hostname.endsWith(d));
   }catch(e){return false;}
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-const {createClient}=supabase;
-const sb=createClient(SB_URL,SB_KEY);
 
 let user=null,allL=[],activeF='',detail=null,chListing=null;
 // Payment state (bankovní převod)
