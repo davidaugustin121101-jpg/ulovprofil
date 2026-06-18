@@ -1223,6 +1223,22 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;height:56px;display:flex;ali
         </div>
         <div class="fg"><label class="fl">Uživatelské jméno *</label><input type="text" class="fi" id="re-name" placeholder="např. honza_prodava" oninput="updateRegInitials(this.value)"></div>
         <div class="fg"><label class="fl">E-mail *</label><input type="email" class="fi" id="re-e" placeholder="vas@email.cz"></div>
+        <div class="fg">
+          <label class="fl">Telefonní číslo *</label>
+          <div style="display:flex;gap:6px">
+            <select id="re-phone-prefix" style="background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r2);padding:10px 8px;font-size:13px;color:var(--white);font-family:var(--mono);cursor:pointer;flex-shrink:0;outline:none">
+              <option value="+420">🇨🇿 +420</option>
+              <option value="+421">🇸🇰 +421</option>
+              <option value="+49">🇩🇪 +49</option>
+              <option value="+43">🇦🇹 +43</option>
+              <option value="+48">🇵🇱 +48</option>
+              <option value="+44">🇬🇧 +44</option>
+              <option value="+1">🇺🇸 +1</option>
+            </select>
+            <input type="tel" class="fi" id="re-phone" placeholder="123 456 789" style="flex:1" oninput="this.value=this.value.replace(/[^0-9 ]/g,'')">
+          </div>
+          <div style="font-size:10px;color:var(--g2);margin-top:4px;font-family:var(--mono)">Telefon slouží pouze pro komunikaci v rámci transakce. Nikdy ho nezveřejníme.</div>
+        </div>
         <div class="fg"><label class="fl">Heslo *</label><input type="password" class="fi" id="re-p" placeholder="Min. 6 znaků"></div>
         <div class="fg"><label class="fl">Heslo znovu *</label><input type="password" class="fi" id="re-p2" placeholder="Zopakuj heslo" onkeydown="if(event.key==='Enter')doReg()"></div>
         <button class="bfull" onclick="doReg()" id="btn-re">Vytvořit účet</button>
@@ -2795,21 +2811,32 @@ async function loadMyReviews(){
 async function doReg(){
   const name=document.getElementById('re-name').value.trim();
   const e=document.getElementById('re-e').value.trim();
+  const phonePrefix=document.getElementById('re-phone-prefix').value;
+  const phoneNum=document.getElementById('re-phone').value.replace(/\s/g,'').trim();
   const p=document.getElementById('re-p').value;
   const p2=document.getElementById('re-p2').value;
   const msg=document.getElementById('re-msg');
   const btn=document.getElementById('btn-re');
   msg.classList.add('h');
   if(!name){showMsg(msg,'Zadej uživatelské jméno');return;}
-  if(!e||!p){showMsg(msg,'Vyplň všechna pole');return;}
+  if(!e){showMsg(msg,'Zadej e-mail');return;}
+  if(!phoneNum||phoneNum.length<8){showMsg(msg,'Zadej platné telefonní číslo');return;}
+  if(!p){showMsg(msg,'Zadej heslo');return;}
   if(p.length<6){showMsg(msg,'Heslo musí mít alespoň 6 znaků');return;}
   if(p!==p2){showMsg(msg,'Hesla se neshodují');return;}
+  const phone=phonePrefix+phoneNum;
   btn.disabled=true;btn.textContent='Zakládám...';
-  const{data,error}=await sb.auth.signUp({email:e,password:p});
+  const{data,error}=await sb.auth.signUp({email:e,password:p,options:{data:{phone}}});
   if(error){btn.disabled=false;btn.textContent='Vytvořit účet';showMsg(msg,error.message);return;}
-  // Save profile
+  // Ulož profil s telefonem
   if(data?.user){
-    const profileData={user_id:data.user.id,username:name,updated_at:new Date().toISOString()};
+    const profileData={
+      user_id:data.user.id,
+      username:name,
+      phone:phone,
+      created_at:new Date().toISOString(),
+      updated_at:new Date().toISOString()
+    };
     if(regAvatarData) profileData.avatar_url=regAvatarData;
     await sb.from('profiles').insert(profileData);
   }
@@ -2841,17 +2868,24 @@ function renderSkeletons(count=6){
 
 async function loadPub(){
   renderSkeletons();
-  // Načti live EUR kurz na pozadí
   fetchEurRate();
   try{
-    const{data,error}=await sb.from('listings').select('id,user_id,platform,followers,niche,price,engagement,audience,account_age,description,photos,status,created_at').eq('status','active').order('created_at',{ascending:false});
+    // Explicitní dotaz bez filtrování — política public_read_active to omezí na aktivní
+    const{data,error}=await sb.from('listings')
+      .select('id,user_id,platform,followers,niche,price,engagement,audience,account_age,description,photos,status,created_at')
+      .eq('status','active')
+      .order('created_at',{ascending:false});
     if(error){
-      console.error('loadPub Supabase error:', error.message, error.code, error.details, error.hint);
-      throw new Error(error.message||error.code||'Supabase error');
+      console.error('loadPub error:', error);
+      // Zkus bez order pokud selže
+      const{data:d2,error:e2}=await sb.from('listings').select('*').eq('status','active');
+      if(e2) throw new Error(e2.message||'RLS nebo připojení selhalo');
+      allL=d2||[];
+    } else {
+      allL=data||[];
     }
-    allL=data||[];
-    // Načti nicknames prodejců zvlášť
-    const userIds=[...new Set((allL).map(l=>l.user_id).filter(Boolean))];
+    // Načti nicknamy prodejců
+    const userIds=[...new Set(allL.map(l=>l.user_id).filter(Boolean))];
     if(userIds.length){
       try{
         const{data:profiles}=await sb.from('profiles').select('user_id,username').in('user_id',userIds);
@@ -2866,13 +2900,15 @@ async function loadPub(){
     renderSoldSection();
   }catch(err){
     const msg=err?.message||'Neznámá chyba';
-    console.error('loadPub error:', msg);
+    console.error('loadPub fatal:', msg);
     const g=document.getElementById('pub-grid');
-    g.innerHTML=`<div class="err-banner" style="grid-column:1/-1">
-      ⚠️ Nepodařilo se načíst nabídky: ${msg}
-      <button onclick="loadPub()">Zkusit znovu</button>
+    if(g) g.innerHTML=`<div class="err-banner" style="grid-column:1/-1">
+      ⚠️ Nepodařilo se načíst nabídky: ${msg}<br>
+      <span style="font-size:11px;color:var(--g2)">Zkontroluj konzoli (F12) pro detail.</span>
+      <button onclick="loadPub()" style="margin-top:8px">↺ Zkusit znovu</button>
     </div>`;
-    document.getElementById('lcount').textContent='Chyba načítání';
+    const lc=document.getElementById('lcount');
+    if(lc) lc.textContent='Chyba načítání';
   }
 }
 function platformLogo(p){
@@ -4863,17 +4899,16 @@ function renderAdmUsers(list){
     el.innerHTML=`<div class="empty"><div class="ei">👤</div><div class="et">Žádní uživatelé</div></div>`;
     return;
   }
-  // Mapa počtu inzerátů na user
   const lCount={};
   admAllL.forEach(l=>{if(l.user_id) lCount[l.user_id]=(lCount[l.user_id]||0)+1;});
 
   el.innerHTML=`
-    <div style="display:grid;grid-template-columns:1fr 1fr 80px 80px 110px 100px;gap:0;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);overflow:hidden">
+    <div style="display:grid;grid-template-columns:180px 1fr 130px 70px 100px 90px;gap:0;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);overflow:hidden;overflow-x:auto">
       <div style="display:contents">
-        <div style="padding:10px 14px;font-family:var(--mono);font-size:9px;color:var(--g2);text-transform:uppercase;letter-spacing:.06em;background:var(--bg3);border-bottom:1px solid var(--border)">Jméno / ID</div>
+        <div style="padding:10px 14px;font-family:var(--mono);font-size:9px;color:var(--g2);text-transform:uppercase;letter-spacing:.06em;background:var(--bg3);border-bottom:1px solid var(--border)">Přezdívka</div>
         <div style="padding:10px 14px;font-family:var(--mono);font-size:9px;color:var(--g2);text-transform:uppercase;letter-spacing:.06em;background:var(--bg3);border-bottom:1px solid var(--border)">E-mail</div>
-        <div style="padding:10px 14px;font-family:var(--mono);font-size:9px;color:var(--g2);text-transform:uppercase;letter-spacing:.06em;background:var(--bg3);border-bottom:1px solid var(--border);text-align:center">Inzeráty</div>
-        <div style="padding:10px 14px;font-family:var(--mono);font-size:9px;color:var(--g2);text-transform:uppercase;letter-spacing:.06em;background:var(--bg3);border-bottom:1px solid var(--border);text-align:center">Nákupy</div>
+        <div style="padding:10px 14px;font-family:var(--mono);font-size:9px;color:var(--g2);text-transform:uppercase;letter-spacing:.06em;background:var(--bg3);border-bottom:1px solid var(--border)">Telefon</div>
+        <div style="padding:10px 14px;font-family:var(--mono);font-size:9px;color:var(--g2);text-transform:uppercase;letter-spacing:.06em;background:var(--bg3);border-bottom:1px solid var(--border);text-align:center">Inz.</div>
         <div style="padding:10px 14px;font-family:var(--mono);font-size:9px;color:var(--g2);text-transform:uppercase;letter-spacing:.06em;background:var(--bg3);border-bottom:1px solid var(--border)">Registrace</div>
         <div style="padding:10px 14px;font-family:var(--mono);font-size:9px;color:var(--g2);text-transform:uppercase;letter-spacing:.06em;background:var(--bg3);border-bottom:1px solid var(--border)">Akce</div>
       </div>
@@ -4883,24 +4918,23 @@ function renderAdmUsers(list){
         const initials=(u.username||'?').substring(0,2).toUpperCase();
         const rowBg=i%2===0?'var(--bg2)':'var(--bg3)';
         const uid=u.user_id||'';
+        const email=admAllL.find(l=>l.user_id===uid)?.seller_email||u.email||'—';
+        const phone=u.phone||'—';
         return `
-          <div style="padding:12px 14px;background:${rowBg};border-bottom:1px solid var(--border);display:flex;align-items:center;gap:9px">
-            <div style="width:30px;height:30px;border-radius:8px;background:var(--odim);border:1px solid var(--obrd);display:grid;place-items:center;font-size:11px;font-weight:700;color:var(--orange);flex-shrink:0">${initials}</div>
-            <div>
-              <div style="font-size:13px;font-weight:600;color:var(--white)">${u.username||'—'}</div>
-              <div style="font-family:var(--mono);font-size:9px;color:var(--g2)">${uid.substring(0,18)}…</div>
-            </div>
+          <div style="padding:10px 14px;background:${rowBg};border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px">
+            <div style="width:28px;height:28px;border-radius:8px;background:var(--odim);border:1px solid var(--obrd);display:grid;place-items:center;font-size:10px;font-weight:700;color:var(--orange);flex-shrink:0">${initials}</div>
+            <div style="font-size:13px;font-weight:600;color:var(--white);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${u.username||'—'}</div>
           </div>
-          <div style="padding:12px 14px;background:${rowBg};border-bottom:1px solid var(--border);font-family:var(--mono);font-size:11px;color:var(--g2);display:flex;align-items:center">${admAllL.find(l=>l.user_id===uid)?.seller_email||'—'}</div>
-          <div style="padding:12px 14px;background:${rowBg};border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:center">
+          <div style="padding:10px 14px;background:${rowBg};border-bottom:1px solid var(--border);font-family:var(--mono);font-size:11px;color:var(--g2);display:flex;align-items:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${email}</div>
+          <div style="padding:10px 14px;background:${rowBg};border-bottom:1px solid var(--border);font-family:var(--mono);font-size:11px;color:${phone!=='—'?'var(--white)':'var(--g2)'};display:flex;align-items:center">
+            ${phone!=='—'?`<a href="tel:${phone}" style="color:var(--green);text-decoration:none">${phone}</a>`:phone}
+          </div>
+          <div style="padding:10px 14px;background:${rowBg};border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:center">
             <span style="font-family:var(--mono);font-size:13px;font-weight:700;color:${cnt>0?'var(--orange)':'var(--g2)'}">${cnt}</span>
           </div>
-          <div style="padding:12px 14px;background:${rowBg};border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:center">
-            <span style="font-family:var(--mono);font-size:13px;color:var(--g2)">—</span>
-          </div>
-          <div style="padding:12px 14px;background:${rowBg};border-bottom:1px solid var(--border);font-family:var(--mono);font-size:11px;color:var(--g2);display:flex;align-items:center">${d}</div>
-          <div style="padding:12px 14px;background:${rowBg};border-bottom:1px solid var(--border);display:flex;align-items:center;gap:6px">
-            <button onclick="admBanUser('${uid}')" style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:#f87171;border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer;font-family:var(--sans)">Smazat</button>
+          <div style="padding:10px 14px;background:${rowBg};border-bottom:1px solid var(--border);font-family:var(--mono);font-size:11px;color:var(--g2);display:flex;align-items:center">${d}</div>
+          <div style="padding:10px 14px;background:${rowBg};border-bottom:1px solid var(--border);display:flex;align-items:center">
+            <button onclick="admBanUser('${uid}')" style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:#f87171;border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer;font-family:var(--sans);white-space:nowrap">🗑 Smazat</button>
           </div>`;
       }).join('')}
     </div>`;
@@ -6982,15 +7016,19 @@ function applyRecommendedPrice(){
 //  PROFILES FIX — fallback pokud created_at sloupec chybí
 // ═══════════════════════════════════════════════════════════════
 async function loadAdminUsers(){
-  // Zkus nejprve s created_at, pak bez něj pokud selže
   let profiles=null;
   try{
-    const{data,error}=await sb.from('profiles').select('user_id,username,avatar_url,created_at').order('created_at',{ascending:false});
+    const{data,error}=await sb.from('profiles')
+      .select('user_id,username,avatar_url,phone,email,created_at')
+      .order('created_at',{ascending:false});
     if(!error) profiles=data;
   }catch(e){}
   if(!profiles){
-    const{data}=await sb.from('profiles').select('user_id,username,avatar_url');
-    profiles=data;
+    // Fallback bez created_at a phone
+    try{
+      const{data}=await sb.from('profiles').select('user_id,username,avatar_url');
+      profiles=data;
+    }catch(e){}
   }
   return profiles||[];
 }
