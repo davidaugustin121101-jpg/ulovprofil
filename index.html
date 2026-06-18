@@ -2242,10 +2242,32 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;height:56px;display:flex;ali
 <script>
 const SB_URL='https://fxrunjsazeznepkdmjxk.supabase.co';
 const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ4cnVuanNhemV6bmVwa2RtanhrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE0ODY2NzAsImV4cCI6MjA5NzA2MjY3MH0.F6ZAiuARAAWcfJh3ZMeggEk-wVN7GjddepVBBRjVR_c';
-// Stripe klíč odstraněn — platby probíhají přes bankovní převod
-const ADMIN='davidaugustin1211@seznam.cz';
+// Admin role se ověřuje přes JWT custom claim (app_metadata.role = 'admin')
+// Nastav pomocí SQL: SELECT set_admin_claim('UUID-ADMIN-UCTU');
+// NIKDY nesrovnávej admin podle emailu v JS — to je client-side a lze obejít
 const {createClient}=supabase;
 const sb=createClient(SB_URL,SB_KEY);
+
+// Bezpečná funkce pro kontrolu admin role přes JWT (server-side claim)
+function isAdminUser(u){
+  if(!u) return false;
+  try{
+    // app_metadata je součást JWT a nelze ho změnit z klienta
+    const meta=u.app_metadata||{};
+    return meta.role==='admin';
+  }catch(e){ return false; }
+}
+
+// XSS sanitizer — escapuje HTML speciální znaky v uživatelských datech
+function esc(str){
+  if(str==null) return '';
+  return String(str)
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;')
+    .replace(/'/g,'&#x27;');
+}
 
 
 
@@ -2396,7 +2418,7 @@ function goInternal(page, sub) {
     ensureSpherePlay();
     document.getElementById('nl-home')?.classList.add('on');
   }else if(page==='auth'){
-    if(user){goInternal(user?.email===ADMIN?'admin':'dashboard');return;}
+    if(user){goInternal(isAdminUser(user)?'admin':'dashboard');return;}
     switchPage('page-auth');if(sub)swAuth(sub);
   }else if(page==='dashboard'){
     if(!user){goInternal('auth');return;}
@@ -2410,7 +2432,7 @@ function goInternal(page, sub) {
   }else if(page==='success'){switchPage('page-success');}
   else if(page==='admin'){
     if(!user){toast('Nemáš admin přístup','error');goInternal('home');return;}
-    if(!user||user.email!==ADMIN){toast('Nemáš admin přístup','error');goInternal('home');return;}
+    if(!user||!isAdminUser(user)){toast('Nemáš admin přístup','error');goInternal('home');return;}
     switchPage('page-admin');loadAdmin();
   }
   else if(page==='valuator'){
@@ -2524,7 +2546,7 @@ async function doChangePassword(){
     showOk('✓ Heslo bylo změněno. Přihlašuješ se...');
     setTimeout(()=>{
       const ov=document.getElementById('pw-change-overlay');if(ov)ov.style.display='none';
-      go(user?.email===ADMIN?'admin':'dashboard');
+      go(isAdminUser(user)?'admin':'dashboard');
     },1800);
   }
 }
@@ -2537,7 +2559,7 @@ function setNavU(u){
   document.getElementById('mob-auth-guest').classList.add('h');
   document.getElementById('mob-auth-user').classList.remove('h');
   // Admin-only UI
-  const isAdmin=u.email===ADMIN;
+  const isAdmin=isAdminUser(u);
   const navAdminBtn=document.getElementById('nav-admin-btn');
   const mobAdminBtn=document.getElementById('mob-admin-btn');
   const sideAdminBtn=document.getElementById('dnav-admin-btn');
@@ -2643,7 +2665,7 @@ async function doLogin(){
   const loggedEmail=data?.user?.email||e;
   user=data?.user||null;
   toast('Přihlášení úspěšné 👋','success');
-  go(loggedEmail===ADMIN?'admin':'dashboard');
+  go(isAdminUser(data?.user)?'admin':'dashboard');
 }
 // AVATAR HELPERS
 let regAvatarData = null;
@@ -2986,33 +3008,35 @@ function renderPub(list){
   el.innerHTML=list.map(l=>{
     const color=platformColor(l.platform);
     const totalPrice=fmtPrice(Math.round(parseInt(l.price)*1.15));
-    const tags=[l.audience,l.account_age,l.niche].filter(Boolean).slice(0,3);
+    const lid=parseInt(l.id)||0;
+    // Vždy escapuj uživatelská data před vložením do innerHTML
+    const tags=[l.audience,l.account_age,l.niche].filter(Boolean).slice(0,3).map(esc);
     return `
-    <div class="lcard" onclick="openDetail(${l.id})">
+    <div class="lcard" onclick="openDetail(${lid})">
       <div class="lcard-cover" style="background:linear-gradient(90deg,${color}44,${color}22,transparent)"></div>
       <div class="lcard-body">
         <div class="lct">
           <div class="lcard-platform">
             ${platformLogo(l.platform)}
             <div>
-              <div class="lcard-pname">${l.platform}</div>
-              ${l._nick?`<div style="font-family:var(--mono);font-size:9px;color:var(--g2)">👤 ${l._nick}</div>`:''}
+              <div class="lcard-pname">${esc(l.platform)}</div>
+              ${l._nick?`<div style="font-family:var(--mono);font-size:9px;color:var(--g2)">👤 ${esc(l._nick)}</div>`:''}
             </div>
           </div>
           <div class="lcard-verified">◉ Ověřeno</div>
         </div>
 
-        <div class="lcf">${l.followers}</div>
+        <div class="lcf">${esc(String(l.followers))}</div>
         <div class="lcf-label">sledujících</div>
-        <div class="lcn">${l.niche}${l.audience?' · '+l.audience:''}</div>
+        <div class="lcn">${esc(l.niche)}${l.audience?' · '+esc(l.audience):''}</div>
 
         ${miniChart(color)}
         ${engagementBar(l.engagement)}
 
         <div class="lcs">
-          <div class="lcst"><div class="v">${l.engagement||'—'}</div><div class="l">Engagement</div></div>
-          <div class="lcst"><div class="v">${l.audience||'—'}</div><div class="l">Audience</div></div>
-          <div class="lcst"><div class="v">${l.account_age||'—'}</div><div class="l">Stáří</div></div>
+          <div class="lcst"><div class="v">${esc(l.engagement||'—')}</div><div class="l">Engagement</div></div>
+          <div class="lcst"><div class="v">${esc(l.audience||'—')}</div><div class="l">Audience</div></div>
+          <div class="lcst"><div class="v">${esc(l.account_age||'—')}</div><div class="l">Stáří</div></div>
         </div>
 
         <div class="lcard-tags">
@@ -3025,7 +3049,7 @@ function renderPub(list){
             <div class="lcp">${totalPrice}</div>
             <div style="font-family:var(--mono);font-size:9px;color:var(--g2);margin-top:2px">48h garance · UlovProfil ručí</div>
           </div>
-          <button class="lcard-btn" onclick="event.stopPropagation();openDetail(${l.id})">Koupit →</button>
+          <button class="lcard-btn" onclick="event.stopPropagation();openDetail(${lid})">Koupit →</button>
         </div>
       </div>
     </div>`;
@@ -3187,7 +3211,7 @@ function openModal(id){
   }
 
   // Platform badge
-  document.getElementById('md-platform-badge').innerHTML=`<span class="pt ${ptC(l.platform)}" style="font-size:11px;padding:4px 10px">${l.platform}</span>`;
+  document.getElementById('md-platform-badge').innerHTML=`<span class="pt ${ptC(l.platform)}" style="font-size:11px;padding:4px 10px">${esc(l.platform)}</span>`;
 
   // Content
   document.getElementById('md-f').textContent=l.followers;
@@ -3196,9 +3220,9 @@ function openModal(id){
 
   // Stats
   document.getElementById('md-st').innerHTML=`
-    <div class="ds"><div class="v">${l.engagement||'—'}</div><div class="l">Engagement</div></div>
-    <div class="ds"><div class="v">${l.audience||'—'}</div><div class="l">Audience</div></div>
-    <div class="ds"><div class="v">${l.account_age||'—'}</div><div class="l">Stáří</div></div>
+    <div class="ds"><div class="v">${esc(l.engagement||'—')}</div><div class="l">Engagement</div></div>
+    <div class="ds"><div class="v">${esc(l.audience||'—')}</div><div class="l">Audience</div></div>
+    <div class="ds"><div class="v">${esc(l.account_age||'—')}</div><div class="l">Stáří</div></div>
   `;
 
   // Engagement chart
@@ -3206,7 +3230,7 @@ function openModal(id){
   const pct=Math.min(eng/15*100,100);
   const engColor=eng<2?'#666':eng<5?'#f59e0b':eng<10?'var(--orange)':'#22c55e';
   const engLabel=eng<2?'Nízký':eng<5?'Průměrný':eng<10?'Vysoký':'Výjimečný';
-  document.getElementById('md-eng-val').innerHTML=`<span style="color:${engColor}">${l.engagement||'—'}</span> <span style="font-size:10px;color:var(--g2)">${engLabel}</span>`;
+  document.getElementById('md-eng-val').innerHTML=`<span style="color:${engColor}">${esc(l.engagement||'—')}</span> <span style="font-size:10px;color:var(--g2)">${esc(engLabel)}</span>`;
   document.getElementById('md-eng-fill').style.cssText=`width:${pct}%;background:linear-gradient(90deg,${engColor},${engColor}88)`;
 
   // Mini bars
@@ -3250,13 +3274,13 @@ function genVS(){
 
 function fillSum(l){
   const base=parseInt(l.price),fee=Math.round(base*.15),tot=base+fee;
-  document.getElementById('sum-ptag').innerHTML=`<span class="pt ${ptC(l.platform)}">${l.platform}</span>`;
+  document.getElementById('sum-ptag').innerHTML=`<span class="pt ${ptC(l.platform)}">${esc(l.platform)}</span>`;
   document.getElementById('sum-f').textContent=l.followers;
   document.getElementById('sum-n').textContent=(l.niche+(l.audience?' / '+l.audience:'')).toUpperCase();
   document.getElementById('sum-st').innerHTML=`
-    <div class="sumst-i"><div class="v">${l.engagement||'—'}</div><div class="l">Engagement</div></div>
-    <div class="sumst-i"><div class="v">${l.audience||'—'}</div><div class="l">Audience</div></div>
-    <div class="sumst-i"><div class="v">${l.account_age||'—'}</div><div class="l">Stáří</div></div>
+    <div class="sumst-i"><div class="v">${esc(l.engagement||'—')}</div><div class="l">Engagement</div></div>
+    <div class="sumst-i"><div class="v">${esc(l.audience||'—')}</div><div class="l">Audience</div></div>
+    <div class="sumst-i"><div class="v">${esc(l.account_age||'—')}</div><div class="l">Stáří</div></div>
   `;
   document.getElementById('sum-base').textContent=fp(base)+' Kč';
   document.getElementById('sum-fee').textContent=fp(fee)+' Kč';
@@ -3431,19 +3455,19 @@ async function loadDash(){
         <div class="dlist-card">
           ${logoEl(l.platform)}
           <div class="dlist-info">
-            <div class="dlist-plat">${l.platform}</div>
+            <div class="dlist-plat">${esc(l.platform)}</div>
             <div class="dlist-fol">${parseInt(l.followers).toLocaleString('cs-CZ')} <span style="font-size:13px;font-weight:400;color:var(--g2)">followers</span></div>
-            <div class="dlist-niche">${l.niche}</div>
+            <div class="dlist-niche">${esc(l.niche)}</div>
             <div class="dlist-stats">
-              <div class="dlist-stat">ER: <span>${l.engagement||'—'}</span></div>
-              <div class="dlist-stat">Publikum: <span>${l.audience||'—'}</span></div>
-              <div class="dlist-stat">Stáří: <span>${l.account_age||'—'}</span></div>
+              <div class="dlist-stat">ER: <span>${esc(l.engagement||'—')}</span></div>
+              <div class="dlist-stat">Publikum: <span>${esc(l.audience||'—')}</span></div>
+              <div class="dlist-stat">Stáří: <span>${esc(l.account_age||'—')}</span></div>
             </div>
           </div>
           <div class="dlist-right">
             ${stBadge(l.status)}
             <div class="dlist-price">${fp(l.price)} Kč<small>tvá výplata</small></div>
-            <button onclick="delL(${l.id})" style="background:var(--rdim);color:var(--red);border:1px solid var(--rbrd);border-radius:7px;font-size:11px;padding:5px 12px;cursor:pointer;font-family:var(--sans)">Smazat</button>
+            <button onclick="delL(${parseInt(l.id)||0})" style="background:var(--rdim);color:var(--red);border:1px solid var(--rbrd);border-radius:7px;font-size:11px;padding:5px 12px;cursor:pointer;font-family:var(--sans)">Smazat</button>
           </div>
         </div>
       `).join('');
@@ -4800,7 +4824,7 @@ async function submitAdd(){
 let admAllL=[], admUsersAll=[], admCurrentTab='listings';
 
 async function loadAdmin(){
-  if(!user||user.email!==ADMIN){toast('Nemáš admin přístup','error');go('home');return;}
+  if(!user||!isAdminUser(user)){toast('Nemáš admin přístup','error');go('home');return;}
 
   // Načti všechny inzeráty
   const{data,error}=await sb.from('listings')
@@ -4922,19 +4946,19 @@ function renderAdmUsers(list){
         const phone=u.phone||'—';
         return `
           <div style="padding:10px 14px;background:${rowBg};border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px">
-            <div style="width:28px;height:28px;border-radius:8px;background:var(--odim);border:1px solid var(--obrd);display:grid;place-items:center;font-size:10px;font-weight:700;color:var(--orange);flex-shrink:0">${initials}</div>
-            <div style="font-size:13px;font-weight:600;color:var(--white);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${u.username||'—'}</div>
+            <div style="width:28px;height:28px;border-radius:8px;background:var(--odim);border:1px solid var(--obrd);display:grid;place-items:center;font-size:10px;font-weight:700;color:var(--orange);flex-shrink:0">${esc(initials)}</div>
+            <div style="font-size:13px;font-weight:600;color:var(--white);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(u.username||'—')}</div>
           </div>
-          <div style="padding:10px 14px;background:${rowBg};border-bottom:1px solid var(--border);font-family:var(--mono);font-size:11px;color:var(--g2);display:flex;align-items:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${email}</div>
+          <div style="padding:10px 14px;background:${rowBg};border-bottom:1px solid var(--border);font-family:var(--mono);font-size:11px;color:var(--g2);display:flex;align-items:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(email)}</div>
           <div style="padding:10px 14px;background:${rowBg};border-bottom:1px solid var(--border);font-family:var(--mono);font-size:11px;color:${phone!=='—'?'var(--white)':'var(--g2)'};display:flex;align-items:center">
-            ${phone!=='—'?`<a href="tel:${phone}" style="color:var(--green);text-decoration:none">${phone}</a>`:phone}
+            ${phone!=='—'?`<a href="tel:${esc(phone)}" style="color:var(--green);text-decoration:none">${esc(phone)}</a>`:phone}
           </div>
           <div style="padding:10px 14px;background:${rowBg};border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:center">
             <span style="font-family:var(--mono);font-size:13px;font-weight:700;color:${cnt>0?'var(--orange)':'var(--g2)'}">${cnt}</span>
           </div>
-          <div style="padding:10px 14px;background:${rowBg};border-bottom:1px solid var(--border);font-family:var(--mono);font-size:11px;color:var(--g2);display:flex;align-items:center">${d}</div>
+          <div style="padding:10px 14px;background:${rowBg};border-bottom:1px solid var(--border);font-family:var(--mono);font-size:11px;color:var(--g2);display:flex;align-items:center">${esc(d)}</div>
           <div style="padding:10px 14px;background:${rowBg};border-bottom:1px solid var(--border);display:flex;align-items:center">
-            <button onclick="admBanUser('${uid}')" style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:#f87171;border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer;font-family:var(--sans);white-space:nowrap">🗑 Smazat</button>
+            <button onclick="admBanUser('${esc(uid)}')" style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:#f87171;border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer;font-family:var(--sans);white-space:nowrap">🗑 Smazat</button>
           </div>`;
       }).join('')}
     </div>`;
@@ -4966,39 +4990,40 @@ function renderAdm(f){
     const dateStr=l.created_at?new Date(l.created_at).toLocaleDateString('cs-CZ'):'—';
     const photos=l.photos&&l.photos.length>0;
 
+    const lid=parseInt(l.id)||0;
     return `
     <div style="background:var(--bg2);border:1px solid ${l.status==='pending'?'rgba(245,158,11,.35)':'var(--border)'};border-radius:var(--r2);margin-bottom:10px;overflow:hidden">
       <!-- Hlavička karty -->
       <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:${l.status==='pending'?'rgba(245,158,11,.06)':'var(--bg3)'};border-bottom:1px solid var(--border);flex-wrap:wrap;gap:8px">
         <div style="display:flex;align-items:center;gap:10px">
-          <span style="font-family:var(--mono);font-size:10px;color:var(--g2)">#${l.id}</span>
-          <span class="pt ${ptC(l.platform)}">${l.platform}</span>
+          <span style="font-family:var(--mono);font-size:10px;color:var(--g2)">#${lid}</span>
+          <span class="pt ${ptC(l.platform)}">${esc(l.platform)}</span>
           <span class="st ${stC(l.status)}">${stL(l.status)}</span>
           ${photos?'<span style="font-family:var(--mono);font-size:9px;background:rgba(34,197,94,.1);color:var(--green);border:1px solid rgba(34,197,94,.2);padding:2px 7px;border-radius:10px">📷 Fotky</span>':''}
         </div>
-        <div style="font-family:var(--mono);font-size:10px;color:var(--g2)">${dateStr}</div>
+        <div style="font-family:var(--mono);font-size:10px;color:var(--g2)">${esc(dateStr)}</div>
       </div>
       <!-- Tělo karty -->
       <div style="padding:14px 16px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
         <div>
           <div style="font-family:var(--mono);font-size:9px;color:var(--g2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Prodejce</div>
-          <div style="font-size:12px;color:var(--white)">${l.seller_email||'—'}</div>
+          <div style="font-size:12px;color:var(--white)">${esc(l.seller_email||'—')}</div>
         </div>
         <div>
           <div style="font-family:var(--mono);font-size:9px;color:var(--g2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Niche / Téma</div>
-          <div style="font-size:12px;color:var(--white)">${l.niche||'—'}${l.audience?' · '+l.audience:''}</div>
+          <div style="font-size:12px;color:var(--white)">${esc(l.niche||'—')}${l.audience?' · '+esc(l.audience):''}</div>
         </div>
         <div>
           <div style="font-family:var(--mono);font-size:9px;color:var(--g2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Followeři</div>
-          <div style="font-size:13px;font-weight:700;color:var(--white);font-family:var(--mono)">${l.followers||'—'}</div>
+          <div style="font-size:13px;font-weight:700;color:var(--white);font-family:var(--mono)">${esc(String(l.followers||'—'))}</div>
         </div>
         <div>
           <div style="font-family:var(--mono);font-size:9px;color:var(--g2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Engagement</div>
-          <div style="font-size:12px;color:var(--white)">${l.engagement||'—'}</div>
+          <div style="font-size:12px;color:var(--white)">${esc(l.engagement||'—')}</div>
         </div>
         <div>
           <div style="font-family:var(--mono);font-size:9px;color:var(--g2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Stáří účtu</div>
-          <div style="font-size:12px;color:var(--white)">${l.account_age||'—'}</div>
+          <div style="font-size:12px;color:var(--white)">${esc(l.account_age||'—')}</div>
         </div>
         <div>
           <div style="font-family:var(--mono);font-size:9px;color:var(--g2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Cena (s provizí)</div>
@@ -5006,22 +5031,22 @@ function renderAdm(f){
           <div style="font-family:var(--mono);font-size:9px;color:var(--g2)">provize: ${fp(fee)} Kč · prodejce: ${fp(base)} Kč</div>
         </div>
       </div>
-      ${l.description?`<div style="padding:0 16px 12px"><div style="font-family:var(--mono);font-size:9px;color:var(--g2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Popis</div><div style="font-size:12px;color:var(--g1);line-height:1.6;background:var(--bg3);border-radius:8px;padding:8px 12px">${l.description}</div></div>`:''}
+      ${l.description?`<div style="padding:0 16px 12px"><div style="font-family:var(--mono);font-size:9px;color:var(--g2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Popis</div><div style="font-size:12px;color:var(--g1);line-height:1.6;background:var(--bg3);border-radius:8px;padding:8px 12px">${esc(l.description)}</div></div>`:''}
       <!-- Akční buttony -->
       <div style="padding:12px 16px;border-top:1px solid var(--border);display:flex;align-items:center;gap:8px;flex-wrap:wrap">
         ${l.status==='pending'?`
-          <button onclick="admUpd(${l.id},'active')" style="background:#22c55e;border:none;border-radius:var(--r2);padding:9px 20px;font-size:13px;font-weight:700;color:#fff;cursor:pointer;font-family:var(--sans);display:flex;align-items:center;gap:6px">✓ Schválit a zveřejnit</button>
-          <button onclick="admUpd(${l.id},'rejected')" style="background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.4);border-radius:var(--r2);padding:9px 20px;font-size:13px;font-weight:700;color:#f87171;cursor:pointer;font-family:var(--sans)">✗ Zamítnout</button>
+          <button onclick="admUpd(${lid},'active')" style="background:#22c55e;border:none;border-radius:var(--r2);padding:9px 20px;font-size:13px;font-weight:700;color:#fff;cursor:pointer;font-family:var(--sans);display:flex;align-items:center;gap:6px">✓ Schválit a zveřejnit</button>
+          <button onclick="admUpd(${lid},'rejected')" style="background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.4);border-radius:var(--r2);padding:9px 20px;font-size:13px;font-weight:700;color:#f87171;cursor:pointer;font-family:var(--sans)">✗ Zamítnout</button>
         `:''}
         ${l.status==='active'?`
-          <button onclick="admUpd(${l.id},'sold')" style="background:rgba(255,85,0,.15);border:1px solid rgba(255,85,0,.4);border-radius:var(--r2);padding:8px 16px;font-size:12px;font-weight:600;color:var(--orange);cursor:pointer;font-family:var(--sans)">Označit jako prodáno</button>
-          <button onclick="admUpd(${l.id},'rejected')" style="background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.25);border-radius:var(--r2);padding:8px 16px;font-size:12px;font-weight:600;color:#f87171;cursor:pointer;font-family:var(--sans)">Skrýt</button>
+          <button onclick="admUpd(${lid},'sold')" style="background:rgba(255,85,0,.15);border:1px solid rgba(255,85,0,.4);border-radius:var(--r2);padding:8px 16px;font-size:12px;font-weight:600;color:var(--orange);cursor:pointer;font-family:var(--sans)">Označit jako prodáno</button>
+          <button onclick="admUpd(${lid},'rejected')" style="background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.25);border-radius:var(--r2);padding:8px 16px;font-size:12px;font-weight:600;color:#f87171;cursor:pointer;font-family:var(--sans)">Skrýt</button>
         `:''}
         ${l.status==='rejected'?`
-          <button onclick="admUpd(${l.id},'active')" style="background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);border-radius:var(--r2);padding:8px 16px;font-size:12px;font-weight:600;color:var(--green);cursor:pointer;font-family:var(--sans)">↩ Obnovit jako aktivní</button>
-          <button onclick="admUpd(${l.id},'pending')" style="background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);border-radius:var(--r2);padding:8px 16px;font-size:12px;font-weight:600;color:var(--amber);cursor:pointer;font-family:var(--sans)">Vrátit do fronty</button>
+          <button onclick="admUpd(${lid},'active')" style="background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);border-radius:var(--r2);padding:8px 16px;font-size:12px;font-weight:600;color:var(--green);cursor:pointer;font-family:var(--sans)">↩ Obnovit jako aktivní</button>
+          <button onclick="admUpd(${lid},'pending')" style="background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);border-radius:var(--r2);padding:8px 16px;font-size:12px;font-weight:600;color:var(--amber);cursor:pointer;font-family:var(--sans)">Vrátit do fronty</button>
         `:''}
-        <button onclick="admDel(${l.id})" style="margin-left:auto;background:none;border:1px solid rgba(239,68,68,.2);border-radius:var(--r2);padding:7px 14px;font-size:11px;color:var(--g2);cursor:pointer;font-family:var(--sans)" onmouseover="this.style.color='#f87171';this.style.borderColor='rgba(239,68,68,.5)'" onmouseout="this.style.color='var(--g2)';this.style.borderColor='rgba(239,68,68,.2)'">🗑 Smazat</button>
+        <button onclick="admDel(${lid})" style="margin-left:auto;background:none;border:1px solid rgba(239,68,68,.2);border-radius:var(--r2);padding:7px 14px;font-size:11px;color:var(--g2);cursor:pointer;font-family:var(--sans)" onmouseover="this.style.color='#f87171';this.style.borderColor='rgba(239,68,68,.5)'" onmouseout="this.style.color='var(--g2)';this.style.borderColor='rgba(239,68,68,.2)'">🗑 Smazat</button>
       </div>
     </div>`;
   }).join('');
@@ -5126,20 +5151,20 @@ function openListingDetail(listing){
   }else{
     gallEmpty.style.display='flex';gallNav.classList.add('h');
   }
-  document.getElementById('ld-platform-badge').innerHTML=`<span class="pt ${ptC(listing.platform)}">${listing.platform}</span>`;
+  document.getElementById('ld-platform-badge').innerHTML=`<span class="pt ${ptC(listing.platform)}">${esc(listing.platform)}</span>`;
 
   // Content
   document.getElementById('ld-followers').textContent=listing.followers;
   document.getElementById('ld-niche').textContent=listing.niche;
   document.getElementById('ld-platform-name').textContent=listing.platform;
 
-  const age=listing.account_age?`<div class="ds"><div class="dk">Stáří účtu</div><div class="dv">${listing.account_age}</div></div>`:'';
-  const aud=listing.audience?`<div class="ds"><div class="dk">Publikum</div><div class="dv">${listing.audience}</div></div>`:'';
-  const views=listing.avg_views?`<div class="ds"><div class="dk">Průměr views</div><div class="dv">${listing.avg_views}</div></div>`:'';
+  const age=listing.account_age?`<div class="ds"><div class="dk">Stáří účtu</div><div class="dv">${esc(listing.account_age)}</div></div>`:'';
+  const aud=listing.audience?`<div class="ds"><div class="dk">Publikum</div><div class="dv">${esc(listing.audience)}</div></div>`:'';
+  const views=listing.avg_views?`<div class="ds"><div class="dk">Průměr views</div><div class="dv">${esc(listing.avg_views)}</div></div>`:'';
   document.getElementById('ld-stats').innerHTML=`
-    <div class="ds"><div class="dk">Platforma</div><div class="dv">${listing.platform}</div></div>
-    <div class="ds"><div class="dk">Followeři</div><div class="dv">${listing.followers}</div></div>
-    ${listing.engagement?`<div class="ds"><div class="dk">Engagement</div><div class="dv">${listing.engagement}</div></div>`:''}
+    <div class="ds"><div class="dk">Platforma</div><div class="dv">${esc(listing.platform)}</div></div>
+    <div class="ds"><div class="dk">Followeři</div><div class="dv">${esc(String(listing.followers))}</div></div>
+    ${listing.engagement?`<div class="ds"><div class="dk">Engagement</div><div class="dv">${esc(listing.engagement)}</div></div>`:''}
     ${age}${aud}${views}
   `;
 
@@ -5149,7 +5174,7 @@ function openListingDetail(listing){
     const pct=Math.min(val/15*100,100);
     const engColor=val<2?'#666':val<5?'#f59e0b':val<10?'#FF5500':'#22c55e';
     const label=val<2?'Nízký':val<5?'Průměrný':val<10?'Vysoký':'Výjimečný';
-    document.getElementById('ld-eng-val').innerHTML=`${listing.engagement} <span style="font-size:10px;color:var(--g2)">${label}</span>`;
+    document.getElementById('ld-eng-val').innerHTML=`${esc(listing.engagement)} <span style="font-size:10px;color:var(--g2)">${esc(label)}</span>`;
     document.getElementById('ld-eng-fill').style.cssText=`width:${pct}%;background:linear-gradient(90deg,${engColor},${engColor}aa)`;
     document.getElementById('ld-eng-wrap').style.display='block';
   }else{
@@ -6692,6 +6717,18 @@ function showValResults(){
 
 // Resend klíč odstraněn z frontendu — emaily se odesílají přes /api/valuator-email
 
+// Client-side rate limit pro valuator gate (backup k DB triggeru)
+const _gateAttempts={};
+function _gateRateOk(email){
+  const now=Date.now();
+  const key=email.toLowerCase().trim();
+  if(!_gateAttempts[key]){_gateAttempts[key]=[];} 
+  _gateAttempts[key]=_gateAttempts[key].filter(t=>now-t<86400000); // 24h okno
+  if(_gateAttempts[key].length>=5) return false;
+  _gateAttempts[key].push(now);
+  return true;
+}
+
 async function submitGate(){
   const email = document.getElementById('v-gate-email').value.trim();
   const phone = document.getElementById('v-gate-phone').value.trim();
@@ -6707,6 +6744,10 @@ async function submitGate(){
   const digits = phone.replace(/\D/g,'');
   if(!phone || digits.length < 8){
     err.textContent='Zadej platné telefonní číslo (min. 8 číslic).'; err.style.display='block'; return;
+  }
+  // Rate limit — max 5 odeslání za 24h per email
+  if(!_gateRateOk(email)){
+    err.textContent='Příliš mnoho pokusů. Zkus to znovu za 24 hodin.'; err.style.display='block'; return;
   }
 
   btn.textContent='Odesílám výsledky...';
@@ -6939,13 +6980,13 @@ async function renderSoldSection(){
         <div style="position:absolute;top:14px;right:14px;z-index:5;font-family:var(--mono);font-size:9px;font-weight:500;padding:3px 9px;border-radius:3px;background:var(--red);color:#fff;text-transform:uppercase;letter-spacing:.1em;display:flex;align-items:center;gap:4px"><span style="width:4px;height:4px;border-radius:50%;background:#fff;display:inline-block"></span>Prodáno</div>
         <div class="lcard-cover" style="background:linear-gradient(90deg,${color}44,${color}22,transparent)"></div>
         <div class="lcard-body" style="opacity:.45">
-          <div class="lct"><div class="lcard-platform">${platformLogo(l.platform)}<div><div class="lcard-pname">${l.platform}</div></div></div></div>
+          <div class="lct"><div class="lcard-platform">${platformLogo(l.platform)}<div><div class="lcard-pname">${esc(l.platform)}</div></div></div></div>
           <div class="lcf">${parseInt(l.followers).toLocaleString('cs-CZ')}</div><div class="lcf-label">sledujících</div>
-          <div class="lcn">${l.niche||''}${l.audience?' · '+l.audience:''}</div>
+          <div class="lcn">${esc(l.niche||'')}${l.audience?' · '+esc(l.audience):''}</div>
           <div class="lcs">
-            <div class="lcst"><div class="v">${l.engagement||'—'}</div><div class="l">Engagement</div></div>
-            <div class="lcst"><div class="v">${l.audience||'—'}</div><div class="l">Audience</div></div>
-            <div class="lcst"><div class="v">${l.account_age||'—'}</div><div class="l">Stáří</div></div>
+            <div class="lcst"><div class="v">${esc(l.engagement||'—')}</div><div class="l">Engagement</div></div>
+            <div class="lcst"><div class="v">${esc(l.audience||'—')}</div><div class="l">Audience</div></div>
+            <div class="lcst"><div class="v">${esc(l.account_age||'—')}</div><div class="l">Stáří</div></div>
           </div>
           <div class="lcard-tags"><span class="lcard-tag">🛡️ garance</span></div>
           <div class="lcfo"><div><div class="lcp">${fmtPrice(total)}</div></div></div>
