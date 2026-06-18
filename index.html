@@ -795,6 +795,12 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;height:56px;display:flex;ali
             <input type="range" class="price-slider" id="price-slider" min="0" max="500000" step="5000" value="500000" oninput="onPriceSlider(this.value)">
             <div class="price-range-val" id="price-slider-val">Bez omezení</div>
           </div>
+          <!-- EUR / CZK přepínač -->
+          <div style="margin-left:auto;display:flex;align-items:center;gap:6px;background:var(--bg3);border:1px solid var(--border2);border-radius:20px;padding:3px 5px">
+            <button id="cur-czk" onclick="setCurrency('CZK')" style="background:var(--orange);border:none;border-radius:16px;padding:4px 10px;font-family:var(--mono);font-size:10px;font-weight:700;color:#fff;cursor:pointer;transition:all .15s">Kč</button>
+            <button id="cur-eur" onclick="setCurrency('EUR')" style="background:none;border:none;border-radius:16px;padding:4px 10px;font-family:var(--mono);font-size:10px;font-weight:600;color:var(--g2);cursor:pointer;transition:all .15s">€</button>
+            <span id="cur-rate-lbl" style="font-family:var(--mono);font-size:9px;color:var(--g2);padding-right:4px"></span>
+          </div>
         </div>
 
         <!-- ACTIVE FILTERS -->
@@ -823,10 +829,10 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;height:56px;display:flex;ali
         </div>
       </div>
 
-      <div class="g4">
+      <div class="g4" id="sold-grid">
 
-        <!-- 1 -->
-        <div class="lcard" style="pointer-events:none;position:relative">
+        <!-- Statické decoy karty — mizí jedna po druhé jak přibývají reálná prodáno -->
+        <div class="lcard sold-decoy" style="pointer-events:none;position:relative">
           <div style="position:absolute;top:14px;right:14px;z-index:5;font-family:var(--mono);font-size:9px;font-weight:500;padding:3px 9px;border-radius:3px;background:var(--red);color:#fff;text-transform:uppercase;letter-spacing:.1em;display:flex;align-items:center;gap:4px"><span style="width:4px;height:4px;border-radius:50%;background:#fff;display:inline-block"></span>Prodáno</div>
           <div class="lcard-cover" style="background:linear-gradient(90deg,#69C9D044,#69C9D022,transparent)"></div>
           <div class="lcard-body" style="opacity:.45">
@@ -835,13 +841,12 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;height:56px;display:flex;ali
             <div class="lcn">Tech novinky · AI vychytávky</div>
             <div class="lcs"><div class="lcst"><div class="v">3.1%</div><div class="l">Engagement</div></div><div class="lcst"><div class="v">CZ</div><div class="l">Audience</div></div><div class="lcst"><div class="v">1 rok</div><div class="l">Stáří</div></div></div>
             <div class="lcard-tags"><span class="lcard-tag">Tech</span><span class="lcard-tag">CZ</span><span class="lcard-tag" style="border-color:rgba(34,197,94,.3);color:var(--green)">🛡️ garance</span></div>
-            <div class="lcfo"><div><div class="lcp">1 400 Kč</div><div style="font-family:var(--mono);font-size:9px;color:var(--g2);margin-top:2px">před 3 hod.</div></div></div>
+            <div class="lcfo"><div><div class="lcp">1 400 Kč</div></div></div>
           </div>
           <div style="padding:0 20px 18px"><button onclick="event.stopPropagation();go('sell')" class="lcard-btn" style="width:100%;background:transparent;color:var(--g1);border:1px solid var(--border2);pointer-events:auto" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='var(--g1)'">Chci podobný →</button></div>
         </div>
 
-        <!-- 2 -->
-        <div class="lcard" style="pointer-events:none;position:relative">
+        <div class="lcard sold-decoy" style="pointer-events:none;position:relative">
           <div style="position:absolute;top:14px;right:14px;z-index:5;font-family:var(--mono);font-size:9px;font-weight:500;padding:3px 9px;border-radius:3px;background:var(--red);color:#fff;text-transform:uppercase;letter-spacing:.1em;display:flex;align-items:center;gap:4px"><span style="width:4px;height:4px;border-radius:50%;background:#fff;display:inline-block"></span>Prodáno</div>
           <div class="lcard-cover" style="background:linear-gradient(90deg,#69C9D044,#69C9D022,transparent)"></div>
           <div class="lcard-body" style="opacity:.45">
@@ -850,13 +855,12 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;height:56px;display:flex;ali
             <div class="lcn">Fotbal · Champions League edity</div>
             <div class="lcs"><div class="lcst"><div class="v">4.7%</div><div class="l">Engagement</div></div><div class="lcst"><div class="v">CZ</div><div class="l">Audience</div></div><div class="lcst"><div class="v">2 roky</div><div class="l">Stáří</div></div></div>
             <div class="lcard-tags"><span class="lcard-tag">Sport</span><span class="lcard-tag">CZ</span><span class="lcard-tag" style="border-color:rgba(34,197,94,.3);color:var(--green)">🛡️ garance</span></div>
-            <div class="lcfo"><div><div class="lcp">2 200 Kč</div><div style="font-family:var(--mono);font-size:9px;color:var(--g2);margin-top:2px">včera</div></div></div>
+            <div class="lcfo"><div><div class="lcp">2 200 Kč</div></div></div>
           </div>
           <div style="padding:0 20px 18px"><button onclick="event.stopPropagation();go('sell')" class="lcard-btn" style="width:100%;background:transparent;color:var(--g1);border:1px solid var(--border2);pointer-events:auto" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='var(--g1)'">Chci podobný →</button></div>
         </div>
 
-        <!-- 3 -->
-        <div class="lcard" style="pointer-events:none;position:relative">
+        <div class="lcard sold-decoy" style="pointer-events:none;position:relative">
           <div style="position:absolute;top:14px;right:14px;z-index:5;font-family:var(--mono);font-size:9px;font-weight:500;padding:3px 9px;border-radius:3px;background:var(--red);color:#fff;text-transform:uppercase;letter-spacing:.1em;display:flex;align-items:center;gap:4px"><span style="width:4px;height:4px;border-radius:50%;background:#fff;display:inline-block"></span>Prodáno</div>
           <div class="lcard-cover" style="background:linear-gradient(90deg,#E1306C44,#E1306C22,transparent)"></div>
           <div class="lcard-body" style="opacity:.45">
@@ -865,13 +869,12 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;height:56px;display:flex;ali
             <div class="lcn">CZ/SK humor · Meme reels</div>
             <div class="lcs"><div class="lcst"><div class="v">6.3%</div><div class="l">Engagement</div></div><div class="lcst"><div class="v">CZ/SK</div><div class="l">Audience</div></div><div class="lcst"><div class="v">3 roky</div><div class="l">Stáří</div></div></div>
             <div class="lcard-tags"><span class="lcard-tag">Humor</span><span class="lcard-tag">CZ/SK</span><span class="lcard-tag" style="border-color:rgba(34,197,94,.3);color:var(--green)">🛡️ garance</span></div>
-            <div class="lcfo"><div><div class="lcp">6 100 Kč</div><div style="font-family:var(--mono);font-size:9px;color:var(--g2);margin-top:2px">včera</div></div></div>
+            <div class="lcfo"><div><div class="lcp">6 100 Kč</div></div></div>
           </div>
           <div style="padding:0 20px 18px"><button onclick="event.stopPropagation();go('sell')" class="lcard-btn" style="width:100%;background:transparent;color:var(--g1);border:1px solid var(--border2);pointer-events:auto" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='var(--g1)'">Chci podobný →</button></div>
         </div>
 
-        <!-- 4 -->
-        <div class="lcard" style="pointer-events:none;position:relative">
+        <div class="lcard sold-decoy" style="pointer-events:none;position:relative">
           <div style="position:absolute;top:14px;right:14px;z-index:5;font-family:var(--mono);font-size:9px;font-weight:500;padding:3px 9px;border-radius:3px;background:var(--red);color:#fff;text-transform:uppercase;letter-spacing:.1em;display:flex;align-items:center;gap:4px"><span style="width:4px;height:4px;border-radius:50%;background:#fff;display:inline-block"></span>Prodáno</div>
           <div class="lcard-cover" style="background:linear-gradient(90deg,#69C9D044,#69C9D022,transparent)"></div>
           <div class="lcard-body" style="opacity:.45">
@@ -885,8 +888,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;height:56px;display:flex;ali
           <div style="padding:0 20px 18px"><button onclick="event.stopPropagation();go('sell')" class="lcard-btn" style="width:100%;background:transparent;color:var(--g1);border:1px solid var(--border2);pointer-events:auto" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='var(--g1)'">Chci podobný →</button></div>
         </div>
 
-        <!-- 5 -->
-        <div class="lcard" style="pointer-events:none;position:relative">
+        <div class="lcard sold-decoy" style="pointer-events:none;position:relative">
           <div style="position:absolute;top:14px;right:14px;z-index:5;font-family:var(--mono);font-size:9px;font-weight:500;padding:3px 9px;border-radius:3px;background:var(--red);color:#fff;text-transform:uppercase;letter-spacing:.1em;display:flex;align-items:center;gap:4px"><span style="width:4px;height:4px;border-radius:50%;background:#fff;display:inline-block"></span>Prodáno</div>
           <div class="lcard-cover" style="background:linear-gradient(90deg,#E1306C44,#E1306C22,transparent)"></div>
           <div class="lcard-body" style="opacity:.45">
@@ -900,8 +902,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;height:56px;display:flex;ali
           <div style="padding:0 20px 18px"><button onclick="event.stopPropagation();go('sell')" class="lcard-btn" style="width:100%;background:transparent;color:var(--g1);border:1px solid var(--border2);pointer-events:auto" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='var(--g1)'">Chci podobný →</button></div>
         </div>
 
-        <!-- 6 -->
-        <div class="lcard" style="pointer-events:none;position:relative">
+        <div class="lcard sold-decoy" style="pointer-events:none;position:relative">
           <div style="position:absolute;top:14px;right:14px;z-index:5;font-family:var(--mono);font-size:9px;font-weight:500;padding:3px 9px;border-radius:3px;background:var(--red);color:#fff;text-transform:uppercase;letter-spacing:.1em;display:flex;align-items:center;gap:4px"><span style="width:4px;height:4px;border-radius:50%;background:#fff;display:inline-block"></span>Prodáno</div>
           <div class="lcard-cover" style="background:linear-gradient(90deg,#1877F244,#1877F222,transparent)"></div>
           <div class="lcard-body" style="opacity:.45">
@@ -915,8 +916,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;height:56px;display:flex;ali
           <div style="padding:0 20px 18px"><button onclick="event.stopPropagation();go('sell')" class="lcard-btn" style="width:100%;background:transparent;color:var(--g1);border:1px solid var(--border2);pointer-events:auto" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='var(--g1)'">Chci podobný →</button></div>
         </div>
 
-        <!-- 7 -->
-        <div class="lcard" style="pointer-events:none;position:relative">
+        <div class="lcard sold-decoy" style="pointer-events:none;position:relative">
           <div style="position:absolute;top:14px;right:14px;z-index:5;font-family:var(--mono);font-size:9px;font-weight:500;padding:3px 9px;border-radius:3px;background:var(--red);color:#fff;text-transform:uppercase;letter-spacing:.1em;display:flex;align-items:center;gap:4px"><span style="width:4px;height:4px;border-radius:50%;background:#fff;display:inline-block"></span>Prodáno</div>
           <div class="lcard-cover" style="background:linear-gradient(90deg,#69C9D044,#69C9D022,transparent)"></div>
           <div class="lcard-body" style="opacity:.45">
@@ -930,8 +930,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;height:56px;display:flex;ali
           <div style="padding:0 20px 18px"><button onclick="event.stopPropagation();go('sell')" class="lcard-btn" style="width:100%;background:transparent;color:var(--g1);border:1px solid var(--border2);pointer-events:auto" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='var(--g1)'">Chci podobný →</button></div>
         </div>
 
-        <!-- 8 -->
-        <div class="lcard" style="pointer-events:none;position:relative">
+        <div class="lcard sold-decoy" style="pointer-events:none;position:relative">
           <div style="position:absolute;top:14px;right:14px;z-index:5;font-family:var(--mono);font-size:9px;font-weight:500;padding:3px 9px;border-radius:3px;background:var(--red);color:#fff;text-transform:uppercase;letter-spacing:.1em;display:flex;align-items:center;gap:4px"><span style="width:4px;height:4px;border-radius:50%;background:#fff;display:inline-block"></span>Prodáno</div>
           <div class="lcard-cover" style="background:linear-gradient(90deg,#1877F244,#1877F222,transparent)"></div>
           <div class="lcard-body" style="opacity:.45">
@@ -949,6 +948,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;height:56px;display:flex;ali
     </div>
   </div>
   <!-- ═══ /NEDÁVNO PRODÁNO ═══ -->
+
 
 
   </article>
@@ -2075,6 +2075,16 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;height:56px;display:flex;ali
 
       <!-- CENA -->
       <div class="ws" id="ws-price" style="display:none">
+        <!-- Doporučená cena z valuátoru -->
+        <div id="w-price-recommend" style="display:none;background:rgba(255,85,0,.08);border:1px solid rgba(255,85,0,.25);border-radius:var(--r2);padding:10px 14px;margin-bottom:12px">
+          <div style="font-family:var(--mono);font-size:9px;color:var(--orange);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">💡 Doporučená cena dle valuátoru</div>
+          <div style="display:flex;align-items:baseline;gap:8px">
+            <span id="w-price-rec-val" style="font-family:var(--mono);font-size:20px;font-weight:700;color:var(--orange)">—</span>
+            <span style="font-family:var(--mono);font-size:10px;color:var(--g2)">Kč <span id="w-price-rec-range" style="color:var(--g2)"></span></span>
+          </div>
+          <div style="font-size:11px;color:var(--g2);margin-top:4px">Tuto cenu ti doporučujeme na základě zadaných parametrů. Můžeš ji přijmout nebo nastavit vlastní.</div>
+          <button onclick="applyRecommendedPrice()" style="margin-top:8px;background:var(--orange);border:none;border-radius:var(--r2);padding:6px 14px;font-size:11px;font-weight:700;color:#fff;cursor:pointer;font-family:var(--sans)">Použít doporučenou cenu →</button>
+        </div>
         <div class="wlbl">Požadovaná cena <span class="wr">*</span><span class="wv" id="w-val-price">—</span></div>
         <div class="wbig" id="w-big-price" style="color:var(--white)">—</div>
         <input type="range" class="wslider" id="w-price-range" min="0" max="59" step="1" value="10">
@@ -2831,6 +2841,8 @@ function renderSkeletons(count=6){
 
 async function loadPub(){
   renderSkeletons();
+  // Načti live EUR kurz na pozadí
+  fetchEurRate();
   try{
     const{data,error}=await sb.from('listings').select('id,user_id,platform,followers,niche,price,engagement,audience,account_age,description,photos,status,created_at').eq('status','active').order('created_at',{ascending:false});
     if(error){
@@ -2851,6 +2863,7 @@ async function loadPub(){
       }catch(e){}
     }
     renderPub(allL);
+    renderSoldSection();
   }catch(err){
     const msg=err?.message||'Neznámá chyba';
     console.error('loadPub error:', msg);
@@ -2936,7 +2949,7 @@ function renderPub(list){
   }
   el.innerHTML=list.map(l=>{
     const color=platformColor(l.platform);
-    const totalPrice=fp(Math.round(parseInt(l.price)*1.15));
+    const totalPrice=fmtPrice(Math.round(parseInt(l.price)*1.15));
     const tags=[l.audience,l.account_age,l.niche].filter(Boolean).slice(0,3);
     return `
     <div class="lcard" onclick="openDetail(${l.id})">
@@ -2973,7 +2986,7 @@ function renderPub(list){
 
         <div class="lcfo">
           <div>
-            <div class="lcp">${totalPrice} Kč</div>
+            <div class="lcp">${totalPrice}</div>
             <div style="font-family:var(--mono);font-size:9px;color:var(--g2);margin-top:2px">48h garance · UlovProfil ručí</div>
           </div>
           <button class="lcard-btn" onclick="event.stopPropagation();openDetail(${l.id})">Koupit →</button>
@@ -4487,6 +4500,7 @@ function wizInitSliders(){
         wShow('ws-age');
       } else if(grp==='age'){
         wShow('ws-price');
+        setTimeout(calcRecommendedPrice, 50);
       }
     });
   });
@@ -4787,11 +4801,8 @@ async function loadAdmin(){
     }
   }
 
-  // Načti uživatele z profiles tabulky
-  const{data:profiles}=await sb.from('profiles')
-    .select('user_id,username,avatar_url,created_at')
-    .order('created_at',{ascending:false});
-  admUsersAll=profiles||[];
+  // Načti uživatele — s fallbackem pokud created_at sloupec chybí
+  admUsersAll=await loadAdminUsers();
   document.getElementById('adm-u').textContent=admUsersAll.length;
 
   // Noví uživatelé tento měsíc
@@ -6829,6 +6840,160 @@ function renderMarketBars(){
 // Init
 document.addEventListener('DOMContentLoaded',()=>{ try{renderMarketBars();}catch(e){} });
 setTimeout(()=>{ try{renderMarketBars();}catch(e){} },500);
+
+// ═══════════════════════════════════════════════════════════════
+//  EUR / CZK KONVERZE — live kurz
+// ═══════════════════════════════════════════════════════════════
+let curMode='CZK', eurRate=25.5; // fallback kurz
+
+async function fetchEurRate(){
+  try{
+    // Frankfurter API — zdarma, bez klíče, live ECB data
+    const r=await fetch('https://api.frankfurter.app/latest?from=CZK&to=EUR');
+    const d=await r.json();
+    if(d?.rates?.EUR) eurRate=d.rates.EUR;
+    const lbl=document.getElementById('cur-rate-lbl');
+    if(lbl) lbl.textContent='1 Kč = '+eurRate.toFixed(4)+' €';
+  }catch(e){ console.warn('EUR kurz nedostupný, používám fallback:', eurRate); }
+}
+
+function setCurrency(cur){
+  curMode=cur;
+  const czkBtn=document.getElementById('cur-czk');
+  const eurBtn=document.getElementById('cur-eur');
+  if(czkBtn){ czkBtn.style.background=cur==='CZK'?'var(--orange)':'none'; czkBtn.style.color=cur==='CZK'?'#fff':'var(--g2)'; }
+  if(eurBtn){ eurBtn.style.background=cur==='EUR'?'var(--orange)':'none'; eurBtn.style.color=cur==='EUR'?'#fff':'var(--g2)'; }
+  // Re-render karty s novou měnou
+  renderPub(allL);
+  renderSoldSection();
+}
+
+function fmtPrice(czk){
+  if(curMode==='EUR'){
+    const eur=(czk*eurRate).toFixed(0);
+    return parseInt(eur).toLocaleString('cs-CZ')+' €';
+  }
+  return parseInt(czk).toLocaleString('cs-CZ')+' Kč';
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  DYNAMICKÁ SEKCE PRODÁNO — reálné + decoy
+// ═══════════════════════════════════════════════════════════════
+async function renderSoldSection(){
+  try{
+    const{data}=await sb.from('listings')
+      .select('id,platform,followers,niche,price,engagement,audience,account_age')
+      .eq('status','sold')
+      .order('created_at',{ascending:false})
+      .limit(8);
+    const real=data||[];
+    const grid=document.getElementById('sold-grid');
+    if(!grid) return;
+    // Počet decoy karet ke skrytí = počet reálně prodaných
+    const decoys=grid.querySelectorAll('.sold-decoy');
+    decoys.forEach((d,i)=>{ d.style.display=i<real.length?'none':''; });
+    // Přidej reálné karty na začátek (pokud ještě nejsou)
+    const existing=grid.querySelectorAll('.sold-real');
+    existing.forEach(e=>e.remove());
+    real.forEach(l=>{
+      const color=platformColor(l.platform);
+      const total=Math.round((parseInt(l.price)||0)*1.15);
+      const card=document.createElement('div');
+      card.className='lcard sold-real';
+      card.style.cssText='pointer-events:none;position:relative';
+      card.innerHTML=`
+        <div style="position:absolute;top:14px;right:14px;z-index:5;font-family:var(--mono);font-size:9px;font-weight:500;padding:3px 9px;border-radius:3px;background:var(--red);color:#fff;text-transform:uppercase;letter-spacing:.1em;display:flex;align-items:center;gap:4px"><span style="width:4px;height:4px;border-radius:50%;background:#fff;display:inline-block"></span>Prodáno</div>
+        <div class="lcard-cover" style="background:linear-gradient(90deg,${color}44,${color}22,transparent)"></div>
+        <div class="lcard-body" style="opacity:.45">
+          <div class="lct"><div class="lcard-platform">${platformLogo(l.platform)}<div><div class="lcard-pname">${l.platform}</div></div></div></div>
+          <div class="lcf">${parseInt(l.followers).toLocaleString('cs-CZ')}</div><div class="lcf-label">sledujících</div>
+          <div class="lcn">${l.niche||''}${l.audience?' · '+l.audience:''}</div>
+          <div class="lcs">
+            <div class="lcst"><div class="v">${l.engagement||'—'}</div><div class="l">Engagement</div></div>
+            <div class="lcst"><div class="v">${l.audience||'—'}</div><div class="l">Audience</div></div>
+            <div class="lcst"><div class="v">${l.account_age||'—'}</div><div class="l">Stáří</div></div>
+          </div>
+          <div class="lcard-tags"><span class="lcard-tag">🛡️ garance</span></div>
+          <div class="lcfo"><div><div class="lcp">${fmtPrice(total)}</div></div></div>
+        </div>
+        <div style="padding:0 20px 18px"><button onclick="event.stopPropagation();go('sell')" class="lcard-btn" style="width:100%;background:transparent;color:var(--g1);border:1px solid var(--border2);pointer-events:auto" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='var(--g1)'">Chci podobný →</button></div>`;
+      grid.insertBefore(card, grid.firstChild);
+    });
+  }catch(e){ console.warn('renderSoldSection error:', e); }
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  DOPORUČENÁ CENA VE FORMULÁŘI
+// ═══════════════════════════════════════════════════════════════
+let _recPrice=0;
+
+function calcRecommendedPrice(){
+  try{
+    const plat=document.getElementById('a-plat')?.value;
+    const fol=parseInt(document.getElementById('a-fol')?.value)||0;
+    const nic=document.getElementById('a-nic')?.value||'';
+    const eng=document.getElementById('a-eng')?.value||'';
+    if(!plat||!fol) return;
+
+    // Základní cena z BASE_PER_K
+    const base=calcBase(fol, plat);
+
+    // Engagement multiplikátor (mapa z platConfig engChips)
+    const engMap={
+      'pod 1%':0.4,'1–3%':0.7,'3–6%':1.0,'6–10%':1.4,'10%+':1.9,
+      'méně než 5 příspěvků/den':0.5,'5–20 příspěvků/den':1.0,'20–50 příspěvků/den':1.3,'50–100 příspěvků/den':1.6,'100+ příspěvků/den':1.9,
+      'pod 500 zobrazení':0.4,'500–2 000 zobrazení':0.7,'2 000–10 000 zobrazení':1.0,'10 000–50 000 zobrazení':1.4,'50 000+ zobrazení':1.9,
+      'AVC pod 5':0.4,'AVC 5–20':0.7,'AVC 20–75':1.0,'AVC 75–300':1.4,'AVC 300+':1.9,
+    };
+    // Najdi nejbližší shodu
+    let engMult=1.0;
+    Object.keys(engMap).forEach(k=>{ if(eng.includes(k.split(' ')[0])||k.includes(eng.split(' ')[0])) engMult=engMap[k]; });
+
+    // Niche multiplikátor
+    const nicheMultMap={'Finance':2.3,'Investice':2.3,'Krypto':1.8,'Podnikání':1.95,'Tech':2.0,'Auta':1.6,'Zdraví':1.55,'Fitness':1.55,'Vzdělávání':1.7,'Móda':1.28,'Krása':1.28,'Gaming':1.2,'Vaření':1.18,'Zábava':1.0,'Humor':1.0};
+    let nicheMult=1.0;
+    Object.keys(nicheMultMap).forEach(k=>{ if(nic.includes(k)) nicheMult=Math.max(nicheMult,nicheMultMap[k]); });
+
+    const raw=Math.round(base*engMult*nicheMult);
+    // Zaokrouhli na hezké číslo
+    _recPrice=Math.round(raw/500)*500;
+    const low=Math.round(_recPrice*0.85/500)*500;
+    const high=Math.round(_recPrice*1.20/500)*500;
+
+    const panel=document.getElementById('w-price-recommend');
+    const valEl=document.getElementById('w-price-rec-val');
+    const rangeEl=document.getElementById('w-price-rec-range');
+    if(panel&&_recPrice>0){
+      panel.style.display='block';
+      if(valEl) valEl.textContent=_recPrice.toLocaleString('cs-CZ');
+      if(rangeEl) rangeEl.textContent='(rozmezí '+low.toLocaleString('cs-CZ')+'–'+high.toLocaleString('cs-CZ')+' Kč)';
+    }
+  }catch(e){}
+}
+
+function applyRecommendedPrice(){
+  if(!_recPrice) return;
+  onPriceManual(_recPrice);
+  const mi=document.getElementById('w-price-manual');
+  if(mi) mi.value=_recPrice;
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  PROFILES FIX — fallback pokud created_at sloupec chybí
+// ═══════════════════════════════════════════════════════════════
+async function loadAdminUsers(){
+  // Zkus nejprve s created_at, pak bez něj pokud selže
+  let profiles=null;
+  try{
+    const{data,error}=await sb.from('profiles').select('user_id,username,avatar_url,created_at').order('created_at',{ascending:false});
+    if(!error) profiles=data;
+  }catch(e){}
+  if(!profiles){
+    const{data}=await sb.from('profiles').select('user_id,username,avatar_url');
+    profiles=data;
+  }
+  return profiles||[];
+}
 </script>
 </div>
 
