@@ -622,6 +622,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;height:56px;display:flex;ali
     <div id="nav-user" class="h" style="display:flex;align-items:center;gap:7px">
       <div class="nav-av" id="nav-av" onclick="go('dashboard')">?</div>
       <span class="nav-em" id="nav-em"></span>
+      <button id="nav-admin-btn" style="display:none;background:rgba(255,85,0,.15);border:1px solid rgba(255,85,0,.4);color:var(--orange);border-radius:var(--r2);padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--sans)" onclick="go('admin')">🛡️ Admin</button>
       <button class="bg" onclick="go('dashboard')">Dashboard</button>
       <button class="bg" onclick="signOut()">Odhlásit</button>
     </div>
@@ -641,6 +642,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;height:56px;display:flex;ali
   </div>
   <div class="mob-auth h" id="mob-auth-user">
     <button class="bg" style="flex:1" onclick="closeMobileNav();go('dashboard')">Dashboard</button>
+    <button id="mob-admin-btn" style="display:none;flex:1;background:rgba(255,85,0,.15);border:1px solid rgba(255,85,0,.4);color:var(--orange);border-radius:var(--r2);padding:9px 12px;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--sans)" onclick="closeMobileNav();go('admin')">🛡️ Admin</button>
     <button class="bg" style="flex:1" onclick="closeMobileNav();signOut()">Odhlásit</button>
   </div>
 </div>
@@ -1250,6 +1252,12 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;height:56px;display:flex;ali
       <div style="height:1px;background:var(--border);margin:8px 0"></div>
       <button class="dnavbtn" onclick="go('sell')"><span class="dnavbtn-ic">➕</span>Přidat nabídku</button>
       <button class="dnavbtn" onclick="go('home')"><span class="dnavbtn-ic">🏪</span>Marketplace</button>
+      <!-- Admin tlačítko — zobrazí se pouze pro admina přes JS -->
+      <div id="dnav-admin-sep" style="display:none;height:1px;background:var(--orange);opacity:.3;margin:8px 0"></div>
+      <button id="dnav-admin-btn" class="dnavbtn" style="display:none;background:rgba(255,85,0,.08);border:1px solid rgba(255,85,0,.2);color:var(--orange)" onclick="go('admin')">
+        <span class="dnavbtn-ic">🛡️</span>Admin panel
+        <span id="dnav-admin-badge" style="margin-left:auto;background:var(--orange);color:#fff;font-family:var(--mono);font-size:9px;font-weight:700;padding:2px 6px;border-radius:10px;display:none">0</span>
+      </button>
       <div style="height:1px;background:var(--border);margin:8px 0"></div>
       <button class="dnavbtn" onclick="signOut()" style="color:var(--red)"><span class="dnavbtn-ic">↩</span>Odhlásit se</button>
     </aside>
@@ -1502,59 +1510,93 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;height:56px;display:flex;ali
 
 <!-- ADMIN -->
 <div class="page h" id="page-admin">
-  <div class="wrap" style="padding-top:32px;padding-bottom:44px">
-    <div style="margin-bottom:18px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
-      <div style="display:flex;align-items:center;gap:10px">
-        <button onclick="go('home')" style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);padding:7px 14px;font-size:12px;color:var(--g1);cursor:pointer;font-family:var(--sans)">← Marketplace</button>
-        <div style="font-family:var(--mono);font-size:11px;color:var(--g2)">🛡️ Admin Panel — UlovProfil</div>
+  <div class="wrap" style="padding-top:28px;padding-bottom:60px;max-width:1100px">
+
+    <!-- Header -->
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:24px">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="width:36px;height:36px;border-radius:10px;background:rgba(255,85,0,.15);border:1px solid rgba(255,85,0,.3);display:grid;place-items:center;font-size:16px">🛡️</div>
+        <div>
+          <div style="font-size:18px;font-weight:700;color:var(--white)">Admin Panel</div>
+          <div style="font-family:var(--mono);font-size:10px;color:var(--g2)">UlovProfil — správce platformy</div>
+        </div>
       </div>
-      <button class="bg" onclick="loadAdmin()" style="font-size:12px;padding:7px 16px">↺ Obnovit data</button>
+      <div style="display:flex;gap:8px">
+        <button onclick="go('home')" style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);padding:8px 14px;font-size:12px;color:var(--g1);cursor:pointer;font-family:var(--sans)">← Marketplace</button>
+        <button onclick="loadAdmin()" style="background:var(--orange);border:none;border-radius:var(--r2);padding:8px 16px;font-size:12px;font-weight:700;color:#fff;cursor:pointer;font-family:var(--sans)">↺ Obnovit</button>
+      </div>
     </div>
 
-    <!-- Stats grid -->
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:9px;margin-bottom:24px">
-      <div class="scard"><div class="sval am" id="adm-p">0</div><div class="slbl">⏳ Pending</div></div>
-      <div class="scard"><div class="sval gr" id="adm-a">0</div><div class="slbl">✓ Aktivní</div></div>
-      <div class="scard"><div class="sval or" id="adm-s">0</div><div class="slbl">✓ Prodáno</div></div>
-      <div class="scard"><div class="sval" id="adm-u">0</div><div class="slbl">👤 Uživatelé</div></div>
-      <div class="scard"><div class="sval gr" id="adm-nu">0</div><div class="slbl">🆕 Tento měsíc</div></div>
-      <div class="scard"><div class="sval or" id="adm-r">0</div><div class="slbl">💰 Provize Kč</div></div>
+    <!-- Stats -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:9px;margin-bottom:28px">
+      <div class="scard" style="cursor:pointer" onclick="swAdmTab('listings',document.getElementById('adm-tab-listings'));swAdm('pending',document.querySelector('#adm-panel-listings .dtab'))">
+        <div class="sval am" id="adm-p">0</div>
+        <div class="slbl">⏳ Čekají na schválení</div>
+      </div>
+      <div class="scard">
+        <div class="sval gr" id="adm-a">0</div>
+        <div class="slbl">✓ Aktivní inzeráty</div>
+      </div>
+      <div class="scard">
+        <div class="sval or" id="adm-s">0</div>
+        <div class="slbl">✓ Prodáno</div>
+      </div>
+      <div class="scard">
+        <div class="sval" id="adm-u">0</div>
+        <div class="slbl">👤 Celkem uživatelů</div>
+      </div>
+      <div class="scard">
+        <div class="sval gr" id="adm-nu">0</div>
+        <div class="slbl">🆕 Nových tento měsíc</div>
+      </div>
+      <div class="scard">
+        <div class="sval or" id="adm-r">0 Kč</div>
+        <div class="slbl">💰 Provize celkem</div>
+      </div>
+    </div>
+
+    <!-- Pending alert — zobrazí se jen pokud jsou pending inzeráty -->
+    <div id="adm-pending-alert" style="display:none;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.3);border-radius:var(--r2);padding:14px 18px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;gap:12px">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="font-size:18px">⏳</span>
+        <div>
+          <div style="font-size:13px;font-weight:600;color:var(--amber)">Čekají inzeráty na schválení</div>
+          <div id="adm-pending-alert-text" style="font-size:11px;color:var(--g2);margin-top:1px"></div>
+        </div>
+      </div>
+      <button onclick="swAdmTab('listings',document.getElementById('adm-tab-listings'));swAdm('pending',document.querySelector('#adm-panel-listings .dtab.on')??document.querySelector('#adm-panel-listings .dtab'))" style="background:var(--amber);border:none;border-radius:var(--r2);padding:7px 14px;font-size:12px;font-weight:700;color:#000;cursor:pointer;white-space:nowrap">Zkontrolovat →</button>
     </div>
 
     <!-- Tabs -->
-    <div class="dtabs" style="margin-bottom:0">
-      <button class="dtab on" id="adm-tab-listings" onclick="swAdmTab('listings',this)">📋 Inzeráty</button>
-      <button class="dtab" id="adm-tab-users" onclick="swAdmTab('users',this)">👤 Uživatelé</button>
+    <div style="display:flex;gap:6px;margin-bottom:16px;border-bottom:1px solid var(--border);padding-bottom:0">
+      <button id="adm-tab-listings" onclick="swAdmTab('listings',this)" style="background:var(--orange);border:none;border-radius:var(--r2) var(--r2) 0 0;padding:10px 20px;font-size:13px;font-weight:700;color:#fff;cursor:pointer;font-family:var(--sans)">📋 Inzeráty</button>
+      <button id="adm-tab-users" onclick="swAdmTab('users',this)" style="background:var(--bg3);border:1px solid var(--border);border-bottom:none;border-radius:var(--r2) var(--r2) 0 0;padding:10px 20px;font-size:13px;font-weight:600;color:var(--g1);cursor:pointer;font-family:var(--sans)">👤 Uživatelé</button>
     </div>
 
-    <!-- LISTINGS PANEL -->
+    <!-- ═══ LISTINGS PANEL ═══ -->
     <div id="adm-panel-listings">
-      <div class="dtabs" style="background:var(--bg3);border-top:none;border-radius:0 0 var(--r2) var(--r2);margin-bottom:14px;padding:8px 12px;gap:6px">
-        <button class="dtab on" onclick="swAdm('pending',this)">⏳ Pending</button>
+
+      <!-- Subfilters -->
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px">
+        <button class="dtab on" onclick="swAdm('pending',this)" style="background:rgba(245,158,11,.15);border-color:rgba(245,158,11,.4);color:var(--amber)">⏳ Pending</button>
         <button class="dtab" onclick="swAdm('active',this)">✓ Aktivní</button>
         <button class="dtab" onclick="swAdm('sold',this)">✓ Prodáno</button>
         <button class="dtab" onclick="swAdm('rejected',this)">✗ Zamítnuto</button>
         <button class="dtab" onclick="swAdm('all',this)">Vše</button>
+        <input type="text" id="adm-search" placeholder="Hledat e-mail, niche, platformu…" oninput="filterAdm(this.value)" style="margin-left:auto;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r2);padding:6px 12px;font-size:12px;color:var(--white);font-family:var(--sans);outline:none;width:220px" onfocus="this.style.borderColor='var(--orange)'" onblur="this.style.borderColor='var(--border2)'">
       </div>
-      <div style="margin-bottom:12px">
-        <input type="text" id="adm-search" placeholder="Hledat podle e-mailu, niche, platformy…" class="fi" oninput="filterAdm(this.value)" style="max-width:360px">
-      </div>
-      <div class="admtable">
-        <div class="admrow hdr"><div>#</div><div>Nabídka / Prodejce</div><div>Platforma</div><div>Followeři</div><div>Cena (s provizí)</div><div>Status</div><div>Akce</div></div>
-        <div id="adm-rows"><div class="empty"><div class="ei">⏳</div><div class="et">Načítám...</div></div></div>
-      </div>
+
+      <!-- Listings table -->
+      <div id="adm-rows"><div class="empty"><div class="ei">⏳</div><div class="et">Načítám…</div></div></div>
     </div>
 
-    <!-- USERS PANEL -->
+    <!-- ═══ USERS PANEL ═══ -->
     <div id="adm-panel-users" style="display:none">
-      <div style="margin-bottom:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-        <input type="text" id="adm-user-search" placeholder="Hledat podle e-mailu nebo jména…" class="fi" oninput="filterUsers(this.value)" style="max-width:360px;flex:1">
-        <div id="adm-user-count" style="font-family:var(--mono);font-size:11px;color:var(--g2);white-space:nowrap"></div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap">
+        <input type="text" id="adm-user-search" placeholder="Hledat podle jména nebo UUID…" oninput="filterUsers(this.value)" style="background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r2);padding:8px 12px;font-size:12px;color:var(--white);font-family:var(--sans);outline:none;width:260px" onfocus="this.style.borderColor='var(--orange)'" onblur="this.style.borderColor='var(--border2)'">
+        <div id="adm-user-count" style="font-family:var(--mono);font-size:11px;color:var(--g2)"></div>
       </div>
-      <div class="admtable">
-        <div class="admrow hdr" style="grid-template-columns:200px 1fr 80px 80px 120px 120px"><div>E-mail</div><div>Jméno</div><div>Inzeráty</div><div>Nákupy</div><div>Registrace</div><div>Akce</div></div>
-        <div id="adm-user-rows"><div class="empty"><div class="ei">👤</div><div class="et">Načítám uživatele…</div></div></div>
-      </div>
+      <div id="adm-user-rows"><div class="empty"><div class="ei">👤</div><div class="et">Načítám uživatele…</div></div></div>
     </div>
 
   </div>
@@ -2468,6 +2510,23 @@ function setNavU(u){
   document.getElementById('nav-em').textContent=u.email;
   document.getElementById('mob-auth-guest').classList.add('h');
   document.getElementById('mob-auth-user').classList.remove('h');
+  // Admin-only UI
+  const isAdmin=u.email===ADMIN;
+  const navAdminBtn=document.getElementById('nav-admin-btn');
+  const mobAdminBtn=document.getElementById('mob-admin-btn');
+  const sideAdminBtn=document.getElementById('dnav-admin-btn');
+  const sideAdminSep=document.getElementById('dnav-admin-sep');
+  if(navAdminBtn) navAdminBtn.style.display=isAdmin?'':'none';
+  if(mobAdminBtn) mobAdminBtn.style.display=isAdmin?'':'none';
+  if(sideAdminBtn) sideAdminBtn.style.display=isAdmin?'flex':'none';
+  if(sideAdminSep) sideAdminSep.style.display=isAdmin?'block':'none';
+  // Načti počet pending pro badge
+  if(isAdmin){
+    sb.from('listings').select('id',{count:'exact'}).eq('status','pending').then(({count})=>{
+      const badge=document.getElementById('dnav-admin-badge');
+      if(badge&&count>0){badge.textContent=count;badge.style.display='inline';}
+    });
+  }
 }
 function setNavG(){
   document.getElementById('nav-guest').style.display='';
@@ -4692,88 +4751,153 @@ let admAllL=[], admUsersAll=[], admCurrentTab='listings';
 
 async function loadAdmin(){
   if(!user||user.email!==ADMIN){toast('Nemáš admin přístup','error');go('home');return;}
-  // Load listings
-  const{data}=await sb.from('listings').select('id,user_id,seller_email,platform,followers,niche,price,engagement,status,created_at,reserved_order_id').order('created_at',{ascending:false});
+
+  // Načti všechny inzeráty
+  const{data,error}=await sb.from('listings')
+    .select('id,user_id,seller_email,platform,followers,niche,price,engagement,audience,account_age,description,photos,status,created_at')
+    .order('created_at',{ascending:false});
+  if(error){toast('Chyba načítání inzerátů: '+error.message,'error');return;}
   admL=data||[]; admAllL=admL;
-  const p=admL.filter(l=>l.status==='pending').length;
+
+  // Statistiky
+  const pending=admL.filter(l=>l.status==='pending');
+  const p=pending.length;
   const a=admL.filter(l=>l.status==='active').length;
   const s=admL.filter(l=>l.status==='sold').length;
-  const rev=admL.filter(l=>l.status==='sold').reduce((sum,l)=>sum+Math.round(l.price*.15),0);
+  const rev=admL.filter(l=>l.status==='sold').reduce((sum,l)=>sum+Math.round((parseInt(l.price)||0)*.15),0);
   document.getElementById('adm-p').textContent=p;
   document.getElementById('adm-a').textContent=a;
   document.getElementById('adm-s').textContent=s;
-  document.getElementById('adm-r').textContent=fp(rev);
-  // Load profiles for users tab
-  const{data:profiles}=await sb.from('profiles').select('user_id,username,avatar_url,created_at').order('created_at',{ascending:false});
+  document.getElementById('adm-r').textContent=fp(rev)+' Kč';
+
+  // Pending alert banner
+  const alert=document.getElementById('adm-pending-alert');
+  if(alert){
+    if(p>0){
+      alert.style.display='flex';
+      const txt=document.getElementById('adm-pending-alert-text');
+      if(txt) txt.textContent=p+' inzer'+(p===1?'át čeká':'áty čekají')+' na tvoje schválení';
+      // Update badge v sidenavě
+      const badge=document.getElementById('dnav-admin-badge');
+      if(badge){badge.textContent=p;badge.style.display='inline';}
+    }else{
+      alert.style.display='none';
+      const badge=document.getElementById('dnav-admin-badge');
+      if(badge) badge.style.display='none';
+    }
+  }
+
+  // Načti uživatele z profiles tabulky
+  const{data:profiles}=await sb.from('profiles')
+    .select('user_id,username,avatar_url,created_at')
+    .order('created_at',{ascending:false});
   admUsersAll=profiles||[];
   document.getElementById('adm-u').textContent=admUsersAll.length;
-  // New users this month
-  const now=new Date(); const month=now.getMonth(); const year=now.getFullYear();
-  const newU=admUsersAll.filter(u=>{ const d=new Date(u.created_at); return d.getMonth()===month&&d.getFullYear()===year; }).length;
+
+  // Noví uživatelé tento měsíc
+  const now=new Date();
+  const newU=admUsersAll.filter(u=>{
+    const d=new Date(u.created_at);
+    return d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear();
+  }).length;
   document.getElementById('adm-nu').textContent=newU;
-  renderAdm(admF);
+
+  // Renderuj aktuální tab
   if(admCurrentTab==='users') renderAdmUsers(admUsersAll);
+  else renderAdm(admF);
 }
 
 function swAdmTab(tab, el){
   admCurrentTab=tab;
-  document.querySelectorAll('[id^="adm-tab-"]').forEach(b=>b.classList.remove('on'));
-  el.classList.add('on');
+  // Tab style
+  ['adm-tab-listings','adm-tab-users'].forEach(id=>{
+    const b=document.getElementById(id);
+    if(!b) return;
+    const active=b.id==='adm-tab-'+tab;
+    b.style.background=active?'var(--orange)':'var(--bg3)';
+    b.style.color=active?'#fff':'var(--g1)';
+    b.style.fontWeight=active?'700':'600';
+    b.style.border=active?'none':'1px solid var(--border)';
+    b.style.borderBottom=active?'none':'none';
+  });
   document.getElementById('adm-panel-listings').style.display=tab==='listings'?'block':'none';
   document.getElementById('adm-panel-users').style.display=tab==='users'?'block':'none';
   if(tab==='users') renderAdmUsers(admUsersAll);
 }
 
 function filterAdm(q){
-  const qq=q.toLowerCase();
-  const filtered=admAllL.filter(l=>
-    (l.seller_email||'').toLowerCase().includes(qq)||
-    (l.niche||'').toLowerCase().includes(qq)||
-    (l.platform||'').toLowerCase().includes(qq)||
-    String(l.id).includes(qq)
-  );
-  admL=filtered;
+  const qq=(q||'').toLowerCase();
+  admL=qq
+    ? admAllL.filter(l=>
+        (l.seller_email||'').toLowerCase().includes(qq)||
+        (l.niche||'').toLowerCase().includes(qq)||
+        (l.platform||'').toLowerCase().includes(qq)||
+        String(l.id).includes(qq))
+    : admAllL;
   renderAdm(admF);
 }
 
 function filterUsers(q){
-  const qq=q.toLowerCase();
-  const filtered=admUsersAll.filter(u=>
-    (u.user_id||'').toLowerCase().includes(qq)||
-    (u.username||'').toLowerCase().includes(qq)
-  );
+  const qq=(q||'').toLowerCase();
+  const filtered=qq
+    ? admUsersAll.filter(u=>(u.username||'').toLowerCase().includes(qq)||(u.user_id||'').toLowerCase().includes(qq))
+    : admUsersAll;
   renderAdmUsers(filtered);
 }
 
 function renderAdmUsers(list){
   document.getElementById('adm-user-count').textContent=list.length+' uživatelů';
   const el=document.getElementById('adm-user-rows');
-  if(!list.length){el.innerHTML=`<div class="empty"><div class="ei">👤</div><div class="et">Žádní uživatelé</div></div>`;return;}
-  // Build listing count map
-  const listingCounts={};
-  admAllL.forEach(l=>{if(l.user_id) listingCounts[l.user_id]=(listingCounts[l.user_id]||0)+1;});
-  el.innerHTML=list.map(u=>{
-    const d=u.created_at?new Date(u.created_at).toLocaleDateString('cs-CZ'):'—';
-    const cnt=listingCounts[u.user_id]||0;
-    const initials=(u.username||u.user_id||'?').substring(0,2).toUpperCase();
-    return `<div class="admrow" style="grid-template-columns:200px 1fr 80px 80px 120px 120px">
-      <div style="font-family:var(--mono);font-size:11px;color:var(--g1);overflow:hidden;text-overflow:ellipsis" title="${u.user_id||''}">${u.user_id?u.user_id.substring(0,26)+'…':'—'}</div>
-      <div style="display:flex;align-items:center;gap:8px">
-        <div style="width:28px;height:28px;border-radius:50%;background:var(--orange);display:grid;place-items:center;font-size:10px;font-weight:700;color:#fff;flex-shrink:0">${initials}</div>
-        <span style="font-size:13px">${u.username||'—'}</span>
+  if(!list.length){
+    el.innerHTML=`<div class="empty"><div class="ei">👤</div><div class="et">Žádní uživatelé</div></div>`;
+    return;
+  }
+  // Mapa počtu inzerátů na user
+  const lCount={};
+  admAllL.forEach(l=>{if(l.user_id) lCount[l.user_id]=(lCount[l.user_id]||0)+1;});
+
+  el.innerHTML=`
+    <div style="display:grid;grid-template-columns:1fr 1fr 80px 80px 110px 100px;gap:0;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);overflow:hidden">
+      <div style="display:contents">
+        <div style="padding:10px 14px;font-family:var(--mono);font-size:9px;color:var(--g2);text-transform:uppercase;letter-spacing:.06em;background:var(--bg3);border-bottom:1px solid var(--border)">Jméno / ID</div>
+        <div style="padding:10px 14px;font-family:var(--mono);font-size:9px;color:var(--g2);text-transform:uppercase;letter-spacing:.06em;background:var(--bg3);border-bottom:1px solid var(--border)">E-mail</div>
+        <div style="padding:10px 14px;font-family:var(--mono);font-size:9px;color:var(--g2);text-transform:uppercase;letter-spacing:.06em;background:var(--bg3);border-bottom:1px solid var(--border);text-align:center">Inzeráty</div>
+        <div style="padding:10px 14px;font-family:var(--mono);font-size:9px;color:var(--g2);text-transform:uppercase;letter-spacing:.06em;background:var(--bg3);border-bottom:1px solid var(--border);text-align:center">Nákupy</div>
+        <div style="padding:10px 14px;font-family:var(--mono);font-size:9px;color:var(--g2);text-transform:uppercase;letter-spacing:.06em;background:var(--bg3);border-bottom:1px solid var(--border)">Registrace</div>
+        <div style="padding:10px 14px;font-family:var(--mono);font-size:9px;color:var(--g2);text-transform:uppercase;letter-spacing:.06em;background:var(--bg3);border-bottom:1px solid var(--border)">Akce</div>
       </div>
-      <div style="font-family:var(--mono);font-size:12px;color:${cnt>0?'var(--orange)':'var(--g2)'}">${cnt}</div>
-      <div style="font-family:var(--mono);font-size:12px;color:var(--g2)">—</div>
-      <div style="font-family:var(--mono);font-size:11px;color:var(--g2)">${d}</div>
-      <div class="admact">
-        <button class="bxs bxs-r" onclick="admBanUser('${u.user_id}')" title="Smazat uživatele">🗑 Smazat</button>
-      </div>
+      ${list.map((u,i)=>{
+        const d=u.created_at?new Date(u.created_at).toLocaleDateString('cs-CZ'):'—';
+        const cnt=lCount[u.user_id]||0;
+        const initials=(u.username||'?').substring(0,2).toUpperCase();
+        const rowBg=i%2===0?'var(--bg2)':'var(--bg3)';
+        const uid=u.user_id||'';
+        return `
+          <div style="padding:12px 14px;background:${rowBg};border-bottom:1px solid var(--border);display:flex;align-items:center;gap:9px">
+            <div style="width:30px;height:30px;border-radius:8px;background:var(--odim);border:1px solid var(--obrd);display:grid;place-items:center;font-size:11px;font-weight:700;color:var(--orange);flex-shrink:0">${initials}</div>
+            <div>
+              <div style="font-size:13px;font-weight:600;color:var(--white)">${u.username||'—'}</div>
+              <div style="font-family:var(--mono);font-size:9px;color:var(--g2)">${uid.substring(0,18)}…</div>
+            </div>
+          </div>
+          <div style="padding:12px 14px;background:${rowBg};border-bottom:1px solid var(--border);font-family:var(--mono);font-size:11px;color:var(--g2);display:flex;align-items:center">${admAllL.find(l=>l.user_id===uid)?.seller_email||'—'}</div>
+          <div style="padding:12px 14px;background:${rowBg};border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:center">
+            <span style="font-family:var(--mono);font-size:13px;font-weight:700;color:${cnt>0?'var(--orange)':'var(--g2)'}">${cnt}</span>
+          </div>
+          <div style="padding:12px 14px;background:${rowBg};border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:center">
+            <span style="font-family:var(--mono);font-size:13px;color:var(--g2)">—</span>
+          </div>
+          <div style="padding:12px 14px;background:${rowBg};border-bottom:1px solid var(--border);font-family:var(--mono);font-size:11px;color:var(--g2);display:flex;align-items:center">${d}</div>
+          <div style="padding:12px 14px;background:${rowBg};border-bottom:1px solid var(--border);display:flex;align-items:center;gap:6px">
+            <button onclick="admBanUser('${uid}')" style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:#f87171;border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer;font-family:var(--sans)">Smazat</button>
+          </div>`;
+      }).join('')}
     </div>`;
-  }).join('');
 }
 
 async function admBanUser(uid){
-  if(!confirm('Opravdu smazat tohoto uživatele a všechny jeho inzeráty?'))return;
+  if(!uid){toast('Chybí user ID','error');return;}
+  if(!confirm('Opravdu smazat uživatele a všechny jeho inzeráty? Tato akce je nevratná.'))return;
   await sb.from('listings').delete().eq('user_id',uid);
   await sb.from('profiles').delete().eq('user_id',uid);
   toast('Uživatel odstraněn','success');
@@ -4781,43 +4905,114 @@ async function admBanUser(uid){
 }
 
 function renderAdm(f){
-  let list=admL;
-  if(f!=='all')list=list.filter(l=>l.status===f);
+  let list=f==='all'?[...admL]:admL.filter(l=>l.status===f);
   const el=document.getElementById('adm-rows');
-  if(!list.length){el.innerHTML=`<div class="empty"><div class="ei">✅</div><div class="et">Žádné záznamy</div></div>`;return;}
-  el.innerHTML=list.map(l=>`
-    <div class="admrow">
-      <div style="font-family:var(--mono);font-size:11px;color:var(--g2)">#${l.id}</div>
-      <div><div style="font-size:13px;font-weight:500">${l.niche||'—'}</div><div style="font-family:var(--mono);font-size:10px;color:var(--g2)">${l.seller_email||'—'}</div></div>
-      <div><span class="pt ${ptC(l.platform)}">${l.platform}</span></div>
-      <div style="font-family:var(--mono);font-size:12px">${l.followers}</div>
-      <div style="font-family:var(--mono);font-size:12px;color:var(--orange)">${fp(Math.round(parseInt(l.price)*1.15))} Kč</div>
-      <div><span class="st ${stC(l.status)}">${stL(l.status)}</span></div>
-      <div class="admact">
-        ${l.status==='pending'?`<button class="bxs bxs-g" onclick="admUpd(${l.id},'active')">✓ Schválit</button><button class="bxs bxs-r" onclick="admUpd(${l.id},'rejected')">✗ Zamít.</button>`:''}
-        ${l.status==='active'?`<button class="bxs bxs-o" onclick="admUpd(${l.id},'sold')">Prodáno</button><button class="bxs bxs-r" onclick="admUpd(${l.id},'rejected')">Skrýt</button>`:''}
-        ${l.status==='rejected'?`<button class="bxs bxs-g" onclick="admUpd(${l.id},'active')">Obnovit</button>`:''}
-        <button class="bxs bxs-gh" onclick="admDel(${l.id})">Smazat</button>
+  if(!el) return;
+
+  if(!list.length){
+    el.innerHTML=`<div class="empty" style="padding:40px"><div class="ei">${f==='pending'?'✅':'📭'}</div><div class="et">${f==='pending'?'Žádné inzeráty čekají na schválení':'Žádné záznamy'}</div></div>`;
+    return;
+  }
+
+  el.innerHTML=list.map(l=>{
+    const base=parseInt(l.price)||0;
+    const total=Math.round(base*1.15);
+    const fee=Math.round(base*.15);
+    const dateStr=l.created_at?new Date(l.created_at).toLocaleDateString('cs-CZ'):'—';
+    const photos=l.photos&&l.photos.length>0;
+
+    return `
+    <div style="background:var(--bg2);border:1px solid ${l.status==='pending'?'rgba(245,158,11,.35)':'var(--border)'};border-radius:var(--r2);margin-bottom:10px;overflow:hidden">
+      <!-- Hlavička karty -->
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:${l.status==='pending'?'rgba(245,158,11,.06)':'var(--bg3)'};border-bottom:1px solid var(--border);flex-wrap:wrap;gap:8px">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="font-family:var(--mono);font-size:10px;color:var(--g2)">#${l.id}</span>
+          <span class="pt ${ptC(l.platform)}">${l.platform}</span>
+          <span class="st ${stC(l.status)}">${stL(l.status)}</span>
+          ${photos?'<span style="font-family:var(--mono);font-size:9px;background:rgba(34,197,94,.1);color:var(--green);border:1px solid rgba(34,197,94,.2);padding:2px 7px;border-radius:10px">📷 Fotky</span>':''}
+        </div>
+        <div style="font-family:var(--mono);font-size:10px;color:var(--g2)">${dateStr}</div>
       </div>
-    </div>
-  `).join('');
+      <!-- Tělo karty -->
+      <div style="padding:14px 16px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+        <div>
+          <div style="font-family:var(--mono);font-size:9px;color:var(--g2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Prodejce</div>
+          <div style="font-size:12px;color:var(--white)">${l.seller_email||'—'}</div>
+        </div>
+        <div>
+          <div style="font-family:var(--mono);font-size:9px;color:var(--g2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Niche / Téma</div>
+          <div style="font-size:12px;color:var(--white)">${l.niche||'—'}${l.audience?' · '+l.audience:''}</div>
+        </div>
+        <div>
+          <div style="font-family:var(--mono);font-size:9px;color:var(--g2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Followeři</div>
+          <div style="font-size:13px;font-weight:700;color:var(--white);font-family:var(--mono)">${l.followers||'—'}</div>
+        </div>
+        <div>
+          <div style="font-family:var(--mono);font-size:9px;color:var(--g2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Engagement</div>
+          <div style="font-size:12px;color:var(--white)">${l.engagement||'—'}</div>
+        </div>
+        <div>
+          <div style="font-family:var(--mono);font-size:9px;color:var(--g2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Stáří účtu</div>
+          <div style="font-size:12px;color:var(--white)">${l.account_age||'—'}</div>
+        </div>
+        <div>
+          <div style="font-family:var(--mono);font-size:9px;color:var(--g2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Cena (s provizí)</div>
+          <div style="font-family:var(--mono);font-size:14px;font-weight:700;color:var(--orange)">${fp(total)} Kč</div>
+          <div style="font-family:var(--mono);font-size:9px;color:var(--g2)">provize: ${fp(fee)} Kč · prodejce: ${fp(base)} Kč</div>
+        </div>
+      </div>
+      ${l.description?`<div style="padding:0 16px 12px"><div style="font-family:var(--mono);font-size:9px;color:var(--g2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Popis</div><div style="font-size:12px;color:var(--g1);line-height:1.6;background:var(--bg3);border-radius:8px;padding:8px 12px">${l.description}</div></div>`:''}
+      <!-- Akční buttony -->
+      <div style="padding:12px 16px;border-top:1px solid var(--border);display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        ${l.status==='pending'?`
+          <button onclick="admUpd(${l.id},'active')" style="background:#22c55e;border:none;border-radius:var(--r2);padding:9px 20px;font-size:13px;font-weight:700;color:#fff;cursor:pointer;font-family:var(--sans);display:flex;align-items:center;gap:6px">✓ Schválit a zveřejnit</button>
+          <button onclick="admUpd(${l.id},'rejected')" style="background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.4);border-radius:var(--r2);padding:9px 20px;font-size:13px;font-weight:700;color:#f87171;cursor:pointer;font-family:var(--sans)">✗ Zamítnout</button>
+        `:''}
+        ${l.status==='active'?`
+          <button onclick="admUpd(${l.id},'sold')" style="background:rgba(255,85,0,.15);border:1px solid rgba(255,85,0,.4);border-radius:var(--r2);padding:8px 16px;font-size:12px;font-weight:600;color:var(--orange);cursor:pointer;font-family:var(--sans)">Označit jako prodáno</button>
+          <button onclick="admUpd(${l.id},'rejected')" style="background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.25);border-radius:var(--r2);padding:8px 16px;font-size:12px;font-weight:600;color:#f87171;cursor:pointer;font-family:var(--sans)">Skrýt</button>
+        `:''}
+        ${l.status==='rejected'?`
+          <button onclick="admUpd(${l.id},'active')" style="background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);border-radius:var(--r2);padding:8px 16px;font-size:12px;font-weight:600;color:var(--green);cursor:pointer;font-family:var(--sans)">↩ Obnovit jako aktivní</button>
+          <button onclick="admUpd(${l.id},'pending')" style="background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);border-radius:var(--r2);padding:8px 16px;font-size:12px;font-weight:600;color:var(--amber);cursor:pointer;font-family:var(--sans)">Vrátit do fronty</button>
+        `:''}
+        <button onclick="admDel(${l.id})" style="margin-left:auto;background:none;border:1px solid rgba(239,68,68,.2);border-radius:var(--r2);padding:7px 14px;font-size:11px;color:var(--g2);cursor:pointer;font-family:var(--sans)" onmouseover="this.style.color='#f87171';this.style.borderColor='rgba(239,68,68,.5)'" onmouseout="this.style.color='var(--g2)';this.style.borderColor='rgba(239,68,68,.2)'">🗑 Smazat</button>
+      </div>
+    </div>`;
+  }).join('');
 }
+
 async function admUpd(id,status){
-  await sb.from('listings').update({status}).eq('id',id);
-  const m={active:'Schváleno ✅',rejected:'Zamítnuto',sold:'Označeno jako prodáno'};
+  const{error}=await sb.from('listings').update({status}).eq('id',id);
+  if(error){toast('Chyba: '+error.message,'error');return;}
+  const m={active:'✅ Schváleno a zveřejněno',rejected:'Inzerát zamítnut',sold:'Označeno jako prodáno',pending:'Vráceno do fronty'};
   toast(m[status]||'OK','success');
   loadAdmin();loadPub();
 }
+
 async function admDel(id){
-  if(!confirm('Smazat inzerát #'+id+'?'))return;
-  await sb.from('listings').delete().eq('id',id);
-  toast('Smazáno','success');loadAdmin();loadPub();
+  if(!confirm('Trvale smazat inzerát #'+id+'?'))return;
+  const{error}=await sb.from('listings').delete().eq('id',id);
+  if(error){toast('Chyba: '+error.message,'error');return;}
+  toast('Inzerát smazán','success');
+  loadAdmin();loadPub();
 }
+
 function swAdm(f,el){
   admF=f;
-  document.querySelectorAll('#adm-panel-listings .dtab').forEach(t=>t.classList.remove('on'));el.classList.add('on');
-  admL=admAllL; // reset filter before re-render
-  const search=document.getElementById('adm-search');if(search&&search.value)filterAdm(search.value);
+  document.querySelectorAll('#adm-panel-listings .dtab').forEach(t=>{
+    t.classList.remove('on');
+    t.style.background='var(--bg3)';
+    t.style.color='var(--g1)';
+  });
+  if(el){
+    el.classList.add('on');
+    el.style.background='var(--orange)';
+    el.style.color='#fff';
+  }
+  admL=admAllL;
+  const search=document.getElementById('adm-search');
+  if(search&&search.value) filterAdm(search.value);
   else renderAdm(f);
 }
 
