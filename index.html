@@ -2890,7 +2890,6 @@ function renderSkeletons(count=6){
 
 async function loadPub(){
   renderSkeletons();
-  fetchEurRate();
   try{
     // Explicitní dotaz bez filtrování — política public_read_active to omezí na aktivní
     const{data,error}=await sb.from('listings')
