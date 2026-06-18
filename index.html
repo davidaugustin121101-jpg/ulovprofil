@@ -2366,14 +2366,33 @@ function go(page, sub) {
 
 async function init(){
   try{
+    // Detekuj recovery token v URL (Supabase ho posílá jako hash fragment)
+    const hash=window.location.hash;
+    const isRecovery=hash.includes('type=recovery')||hash.includes('type=email_change');
+
     const {data:{session}}=await sb.auth.getSession();
-    if(session){user=session.user;setNavU(user);}else setNavG();
+    if(session){
+      user=session.user;
+      setNavU(user);
+      // Pokud session vznikla z recovery tokenu, zobraz formulář pro změnu hesla
+      if(isRecovery){
+        document.getElementById('ls').style.opacity='0';
+        setTimeout(()=>document.getElementById('ls').style.display='none',300);
+        showChangePasswordForm();
+        // Vyčisti hash z URL aby se neplete s routingem
+        history.replaceState(null,'',window.location.pathname);
+        return;
+      }
+    }else{
+      setNavG();
+    }
     sb.auth.onAuthStateChange((event,s)=>{
-      // Intercept password recovery — show change form instead of auto-login
       if(event==='PASSWORD_RECOVERY'){
         user=s?.user||null;
+        if(user) setNavU(user);
         document.getElementById('ls').style.display='none';
         showChangePasswordForm();
+        history.replaceState(null,'',window.location.pathname);
         return;
       }
       user=s?.user||null;
@@ -2507,19 +2526,20 @@ async function doResetPw(){
   const msg=document.getElementById('pw-reset-msg');
   const btn=document.getElementById('btn-pw-reset');
   if(!email){
-    msg.style.display='block';
     msg.style.cssText='display:block;margin-top:10px;font-size:11px;border-radius:var(--r2);padding:8px 12px;line-height:1.5;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.25);color:#f87171';
     msg.textContent='Zadej svůj e-mail.';return;
   }
   btn.disabled=true;btn.textContent='Odesílám...';
-  const{error}=await sb.auth.resetPasswordForEmail(email,{redirectTo:window.location.origin+window.location.pathname+'#prihlaseni'});
+  // redirectTo musí být přesná URL whitelistovaná v Supabase → Authentication → URL Configuration
+  const redirectTo=window.location.origin+(window.location.pathname==='/'?'':window.location.pathname);
+  const{error}=await sb.auth.resetPasswordForEmail(email,{redirectTo});
   btn.disabled=false;btn.textContent='Odeslat odkaz →';
   if(error){
     msg.style.cssText='display:block;margin-top:10px;font-size:11px;border-radius:var(--r2);padding:8px 12px;line-height:1.5;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.25);color:#f87171';
     msg.textContent='Chyba: '+error.message;
   }else{
     msg.style.cssText='display:block;margin-top:10px;font-size:11px;border-radius:var(--r2);padding:8px 12px;line-height:1.5;background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.2);color:#4ade80';
-    msg.textContent='✓ Odkaz odeslán! Zkontroluj svůj e-mail (i složku Spam).';
+    msg.innerHTML='✓ Odkaz odeslán! Zkontroluj svůj e-mail (i složku Spam).<br><span style="color:var(--g2);font-size:10px">Po kliknutí na odkaz v e-mailu se vrátíš sem a zobrazí se formulář pro nové heslo.</span>';
     btn.style.display='none';
   }
 }
@@ -2531,12 +2551,14 @@ async function doLogin(){
   msg.classList.add('h');
   if(!e||!p){showMsg(msg,'Vyplň e-mail a heslo');return;}
   btn.disabled=true;btn.textContent='Přihlašuji...';
-  const{error}=await sb.auth.signInWithPassword({email:e,password:p});
+  const{data,error}=await sb.auth.signInWithPassword({email:e,password:p});
   btn.disabled=false;btn.textContent='Přihlásit se';
   if(error){showMsg(msg,'Špatný e-mail nebo heslo');return;}
+  // Použij e-mail přímo z odpovědi — user globální proměnná ještě nemusí být nastavená
+  const loggedEmail=data?.user?.email||e;
+  user=data?.user||null;
   toast('Přihlášení úspěšné 👋','success');
-  // Verifikuj admin roli a přesměruj
-  go(user?.email===ADMIN?'admin':'dashboard');
+  go(loggedEmail===ADMIN?'admin':'dashboard');
 }
 // AVATAR HELPERS
 let regAvatarData = null;
