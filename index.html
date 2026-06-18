@@ -2896,6 +2896,7 @@ function renderSkeletons(count=6){
 
 async function loadPub(){
   renderSkeletons();
+  fetchEurRate();
   try{
     // Explicitní dotaz bez filtrování — política public_read_active to omezí na aktivní
     const{data,error}=await sb.from('listings')
@@ -4513,16 +4514,29 @@ function wizInitSliders(){
   const ps=document.getElementById('w-price-range');
   if(ps){
     ps.oninput=function(){
-      const v=W_PRICE[+this.value];
-      const fee=Math.round(v*0.15);
-      document.getElementById('w-big-price').textContent=v.toLocaleString('cs-CZ')+' Kč';
-      document.getElementById('w-val-price').textContent=v.toLocaleString('cs-CZ')+' Kč';
-      document.getElementById('a-price').value=v;
-      document.getElementById('w-ptotal').textContent=(v+fee).toLocaleString('cs-CZ');
-      document.getElementById('w-pseller').textContent=v.toLocaleString('cs-CZ');
-      document.getElementById('w-price-break').style.display='flex';
-      const mi=document.getElementById('w-price-manual');
-      if(mi) mi.value=v;
+      const czk=W_PRICE[+this.value];
+      const fee=Math.round(czk*0.15);
+      const total=czk+fee;
+      const displayCzk=czk.toLocaleString('cs-CZ');
+      const displayEur=czkToEur(czk).toLocaleString('cs-CZ');
+      const totalEur=czkToEur(total).toLocaleString('cs-CZ');
+      const breakEl=document.getElementById('w-price-break');
+
+      if(_addCurMode==='EUR'){
+        document.getElementById('w-big-price').textContent=displayEur+' €  (≈ '+displayCzk+' Kč)';
+        document.getElementById('w-val-price').textContent=displayEur+' €';
+        breakEl.innerHTML=`<span>Kupující zaplatí: <strong style="color:var(--orange)">${totalEur} €</strong></span><span>Ty dostaneš (po 15% provizi): <strong style="color:var(--green)">${displayEur} €</strong></span>`;
+        const mi=document.getElementById('w-price-manual');
+        if(mi) mi.value=czkToEur(czk);
+      } else {
+        document.getElementById('w-big-price').textContent=displayCzk+' Kč (≈ '+displayEur+' €)';
+        document.getElementById('w-val-price').textContent=displayCzk+' Kč';
+        breakEl.innerHTML=`<span>Kupující zaplatí: <strong id="w-ptotal" style="color:var(--orange)">${total.toLocaleString('cs-CZ')} Kč</strong></span><span>Ty dostaneš (po 15% provizi): <strong id="w-pseller" style="color:var(--green)">${displayCzk} Kč</strong></span>`;
+        const mi=document.getElementById('w-price-manual');
+        if(mi) mi.value=czk;
+      }
+      document.getElementById('a-price').value=czk;
+      breakEl.style.display='flex';
       wShow('ws-desc');
       document.getElementById('btn-wiz-next').style.display='block';
     };
@@ -4597,7 +4611,7 @@ function onPriceManual(raw){
   // Pokud uživatel zadává v EUR, převedeme na CZK pro uložení
   let czk;
   if(_addCurMode==='EUR'){
-    if(inputVal<10) return; // min 10 € = ~250 Kč
+    if(inputVal<10) return; // min 10 €
     czk=Math.round(inputVal*eurRate);
   } else {
     if(inputVal<500) return;
@@ -4605,10 +4619,13 @@ function onPriceManual(raw){
   }
 
   const fee=Math.round(czk*0.15);
+  const total=czk+fee;
   const displayCzk=czk.toLocaleString('cs-CZ');
   const displayEur=czkToEur(czk).toLocaleString('cs-CZ');
+  const feeEur=czkToEur(fee).toLocaleString('cs-CZ');
+  const totalEur=czkToEur(total).toLocaleString('cs-CZ');
 
-  // Zobraz cenu v zadané měně + ekvivalent
+  // Velký display + label v hlavičce
   if(_addCurMode==='EUR'){
     document.getElementById('w-big-price').textContent=inputVal.toLocaleString('cs-CZ')+' € (≈ '+displayCzk+' Kč)';
     document.getElementById('w-val-price').textContent=inputVal.toLocaleString('cs-CZ')+' €';
@@ -4618,9 +4635,21 @@ function onPriceManual(raw){
   }
 
   document.getElementById('a-price').value=czk; // vždy ukládáme v CZK
-  document.getElementById('w-ptotal').textContent=(czk+fee).toLocaleString('cs-CZ');
-  document.getElementById('w-pseller').textContent=czk.toLocaleString('cs-CZ');
-  document.getElementById('w-price-break').style.display='flex';
+
+  // Breakdown — zobraz ve zvolené měně
+  const breakEl=document.getElementById('w-price-break');
+  const ptotalEl=document.getElementById('w-ptotal');
+  const psellerEl=document.getElementById('w-pseller');
+  if(_addCurMode==='EUR'){
+    ptotalEl.textContent=totalEur+' €';
+    psellerEl.textContent=displayEur+' €';
+    // Přepiš texty labelu na €
+    breakEl.innerHTML=`<span>Kupující zaplatí: <strong style="color:var(--orange)">${totalEur} €</strong></span><span>Ty dostaneš (po 15% provizi): <strong style="color:var(--green)">${displayEur} €</strong></span>`;
+  } else {
+    breakEl.innerHTML=`<span>Kupující zaplatí: <strong id="w-ptotal" style="color:var(--orange)">${total.toLocaleString('cs-CZ')} Kč</strong></span><span>Ty dostaneš (po 15% provizi): <strong id="w-pseller" style="color:var(--green)">${displayCzk} Kč</strong></span>`;
+  }
+  breakEl.style.display='flex';
+
   // Snap slider to nearest W_PRICE value
   const rng=document.getElementById('w-price-range');
   if(rng){
