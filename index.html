@@ -23,6 +23,8 @@
 <meta property="og:title" content="UlovProfil — Prodej účtu sociální sítě bezpečně | CZ/SK Marketplace">
 <meta property="og:description" content="První česká platforma pro bezpečný nákup a prodej účtů TikTok, Instagram, YouTube, Facebook a dalších. UlovProfil garantuje každou transakci vlastním jménem. Platba v CZK.">
 <meta property="og:image" content="https://ulovprofil.cz/og-image.jpg">
+<meta property="og:image:secure_url" content="https://ulovprofil.cz/og-image.jpg">
+<meta property="og:image:type" content="image/jpeg">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="UlovProfil — Bezpečný marketplace pro prodej sociálních účtů">
@@ -35,6 +37,7 @@
 <meta name="twitter:title" content="UlovProfil — Prodej účtu sociální sítě bezpečně">
 <meta name="twitter:description" content="První česká platforma pro bezpečný prodej a nákup účtů TikTok, Instagram, YouTube a dalších. UlovProfil garantuje každou transakci. Platba v CZK.">
 <meta name="twitter:image" content="https://ulovprofil.cz/og-image.jpg">
+<meta name="twitter:image:alt" content="UlovProfil — Bezpečný marketplace pro prodej sociálních účtů">
 
 <!-- ═══ SCHEMA.ORG STRUCTURED DATA ═══ -->
 <script type="application/ld+json">
@@ -595,7 +598,12 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;height:56px;display:flex;ali
 </head>
 <body>
 
-<div class="ls" id="ls"><div class="lm">UP</div></div>
+<div class="ls" id="ls">
+  <div style="display:flex;flex-direction:column;align-items:center;gap:14px">
+    <div class="lm">UP</div>
+    <div style="font-family:var(--mono);font-size:11px;color:var(--g2);letter-spacing:.08em">Načítám...</div>
+  </div>
+</div>
 <div class="toast" id="toast"><div class="tdot"></div><span id="tmsg"></span></div>
 
 <nav style="top:0">
@@ -2450,10 +2458,21 @@ async function init(){
   }catch(e){setNavG();}
   document.getElementById('ls').style.opacity='0';
   setTimeout(()=>document.getElementById('ls').style.display='none',300);
-  handleRoute();
-  loadPub();
+  // setTimeout zajistí, že handleRoute() poběží až poté co prohlížeč doparse
+  // zbytek HTML (page-valuator a další stránky jsou definovány za tímto scriptem)
+  setTimeout(handleRoute, 0);
+  setTimeout(loadPub, 0);
   window.addEventListener('popstate', () => handleRoute());
 }
+
+// Záchranný timeout — pokud init() selže nebo CDN je pomalé, loading screen se skryje za 5s
+setTimeout(()=>{
+  const ls=document.getElementById('ls');
+  if(ls&&ls.style.display!=='none'&&ls.style.opacity!=='0'){
+    ls.style.opacity='0';
+    setTimeout(()=>{ls.style.display='none';setTimeout(handleRoute,0);},300);
+  }
+},5000);
 
 function showChangePasswordForm(){
   // Hide all pages, show password change overlay
@@ -2849,6 +2868,7 @@ function renderSkeletons(count=6){
 
 async function loadPub(){
   renderSkeletons();
+  fetchEurRate();
   try{
     // Explicitní dotaz bez filtrování — política public_read_active to omezí na aktivní
     const{data,error}=await sb.from('listings')
