@@ -1791,9 +1791,8 @@ pre{white-space:pre-wrap;word-break:break-word}
       <!-- Subfilters -->
       <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px">
         <button class="dtab on" onclick="swAdm('pending',this)" style="background:rgba(245,158,11,.15);border-color:rgba(245,158,11,.4);color:var(--amber)">⏳ Pending</button>
-        <button class="dtab" onclick="swAdm('active',this)">✓ Aktivní</button>
-        <button class="dtab" onclick="swAdm('reserved',this)">🔒 Rezervováno</button>
-        <button class="dtab" onclick="swAdm('sold',this)">✓ Prodáno</button>
+        <button class="dtab" onclick="swAdm('active',this)" id="adm-tab-active">✓ Aktivní <span id="adm-reserved-count" style="display:none;background:rgba(245,158,11,.3);color:#f59e0b;border-radius:10px;font-size:9px;padding:1px 6px;margin-left:3px"></span></button>
+        <button class="dtab" onclick="swAdm('sold',this)">💰 Prodáno</button>
         <button class="dtab" onclick="swAdm('rejected',this)">✗ Zamítnuto</button>
         <button class="dtab" onclick="swAdm('all',this)">Vše</button>
         <input type="text" id="adm-search" placeholder="Hledat e-mail, niche, platformu…" oninput="filterAdm(this.value)" style="margin-left:auto;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r2);padding:6px 12px;font-size:12px;color:var(--white);font-family:var(--sans);outline:none;width:220px" onfocus="this.style.borderColor='var(--orange)'" onblur="this.style.borderColor='var(--border2)'">
@@ -3118,12 +3117,11 @@ async function loadPub(){
     // Explicitní dotaz bez filtrování — política public_read_active to omezí na aktivní
     const{data,error}=await sb.from('listings')
       .select('id,user_id,platform,followers,niche,price,engagement,audience,account_age,description,photos,status,created_at')
-      .eq('status','active')
+      .in('status',['active','reserved'])
       .order('created_at',{ascending:false});
     if(error){
       console.error('loadPub error:', error);
-      // Zkus bez order pokud selže
-      const{data:d2,error:e2}=await sb.from('listings').select('*').eq('status','active');
+      const{data:d2,error:e2}=await sb.from('listings').select('*').in('status',['active','reserved']);
       if(e2) throw new Error(e2.message||'RLS nebo připojení selhalo');
       allL=d2||[];
     } else {
@@ -3235,7 +3233,8 @@ function renderPub(list){
     // Vždy escapuj uživatelská data před vložením do innerHTML
     const tags=[l.audience,l.account_age,l.niche].filter(Boolean).slice(0,3).map(esc);
     return `
-    <div class="lcard" onclick="openDetail(${lid})">
+    <div class="lcard${l.status==='reserved'?' reserved-card':''}" onclick="openDetail(${lid})" style="${l.status==='reserved'?'border-color:rgba(245,158,11,.4)':''}">
+      ${l.status==='reserved'?'<div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#f59e0b,#f59e0b88)"></div>':''}
       <div class="lcard-cover" style="background:linear-gradient(90deg,${color}44,${color}22,transparent)"></div>
       <div class="lcard-body">
         <div class="lct">
@@ -3246,7 +3245,10 @@ function renderPub(list){
               ${l._nick?`<div style="font-family:var(--mono);font-size:9px;color:var(--g2)">👤 ${esc(l._nick)}</div>`:''}
             </div>
           </div>
-          <div class="lcard-verified">◉ Ověřeno</div>
+          ${l.status==='reserved'
+            ?'<div style="display:flex;align-items:center;gap:4px;font-family:var(--mono);font-size:9px;font-weight:600;padding:3px 8px;border-radius:20px;background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.4);color:#f59e0b">🔒 Rezervováno</div>'
+            :'<div class="lcard-verified">◉ Ověřeno</div>'
+          }
         </div>
 
         <div class="lcf">${esc(String(l.followers))}</div>
@@ -3624,12 +3626,26 @@ async function doPay(){
     const base=parseInt(chListing.price);
     const fee=total-base;
 
-    // ── Oprava 4: Inzerát označit jako 'reserved' (zmizí z tržiště) ──
+    // ── Oprava 3+4: Inzerát označit jako 'reserved' — zůstane na marketplace se žlutým odznakem ──
     try{
       await sb.from('listings').update({status:'reserved'}).eq('id',chListing.id);
-      // Aktualizuj lokální cache
       allL=allL.map(l=>l.id===chListing.id?{...l,status:'reserved'}:l);
       renderPub(allL);
+      // Email prodejci — inzerát byl rezervován, čeká se na platbu
+      await fetch('/api/seller-notification',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({
+          seller_email: chListing.seller_email,
+          status: 'reserved',
+          platform: chListing.platform,
+          followers: chListing.followers,
+          niche: chListing.niche,
+          listing_id: chListing.id,
+          variable_symbol: vs,
+          amount: total
+        })
+      }).catch(e=>console.warn('Seller email error:',e));
     }catch(e){ console.warn('Listing reserve error:', e); }
 
     // ── Oprava 3: VS ze serveru — zobraz v QR i v success stránce ──
@@ -3753,7 +3769,8 @@ async function loadDash(){
     const g=document.getElementById('my-grid');
     const stBadge=(s)=>{
       if(s==='active') return '<span style="background:rgba(34,197,94,.12);color:var(--green);border:1px solid rgba(34,197,94,.25);border-radius:6px;font-family:var(--mono);font-size:10px;padding:3px 9px">✓ Aktivní</span>';
-      if(s==='pending') return '<span style="background:rgba(245,158,11,.1);color:var(--amber);border:1px solid rgba(245,158,11,.25);border-radius:6px;font-family:var(--mono);font-size:10px;padding:3px 9px">⏳ Čeká</span>';
+      if(s==='pending') return '<span style="background:rgba(245,158,11,.1);color:var(--amber);border:1px solid rgba(245,158,11,.25);border-radius:6px;font-family:var(--mono);font-size:10px;padding:3px 9px">⏳ Čeká na schválení</span>';
+      if(s==='reserved') return '<span style="background:rgba(245,158,11,.15);color:#f59e0b;border:1px solid rgba(245,158,11,.4);border-radius:6px;font-family:var(--mono);font-size:10px;padding:3px 9px;animation:pulse 1.5s infinite">🔒 Rezervováno — čeká na platbu</span>';
       if(s==='sold') return '<span style="background:rgba(255,85,0,.1);color:var(--orange);border:1px solid rgba(255,85,0,.25);border-radius:6px;font-family:var(--mono);font-size:10px;padding:3px 9px">💰 Prodáno</span>';
       return '';
     };
@@ -3766,7 +3783,7 @@ async function loadDash(){
     if(!list.length){g.innerHTML=`<div class="empty"><div class="ei">📋</div><div class="et">Zatím žádné nabídky</div><div class="ed">Přidej svůj první účet a začni prodávat.</div><button class="bsm bsm-o" onclick="openAdd()" style="margin-top:8px">+ Přidat nabídku</button></div>`;
     }else{
       g.innerHTML=list.map(l=>`
-        <div class="dlist-card">
+        <div class="dlist-card" style="${l.status==='reserved'?'border-color:rgba(245,158,11,.4);background:rgba(245,158,11,.03)':''}">
           ${logoEl(l.platform)}
           <div class="dlist-info">
             <div class="dlist-plat">${esc(l.platform)}</div>
@@ -3777,11 +3794,12 @@ async function loadDash(){
               <div class="dlist-stat">Publikum: <span>${esc(l.audience||'—')}</span></div>
               <div class="dlist-stat">Stáří: <span>${esc(l.account_age||'—')}</span></div>
             </div>
+            ${l.status==='reserved'?`<div style="margin-top:8px;font-size:12px;color:#f59e0b;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.25);border-radius:6px;padding:7px 10px;line-height:1.5">🔒 <strong>Tvůj inzerát je rezervován</strong> — kupující potvrdil zájem a čeká se na připsání platby na účet UlovProfil. Po přijetí platby tě kontaktujeme ohledně předání přístupů.</div>`:''}
           </div>
           <div class="dlist-right">
             ${stBadge(l.status)}
             <div class="dlist-price">${fp(l.price)} Kč<small>tvá výplata</small></div>
-            <button onclick="delL(${parseInt(l.id)||0})" style="background:var(--rdim);color:var(--red);border:1px solid var(--rbrd);border-radius:7px;font-size:11px;padding:5px 12px;cursor:pointer;font-family:var(--sans)">Smazat</button>
+            ${l.status!=='reserved'?`<button onclick="delL(${parseInt(l.id)||0})" style="background:var(--rdim);color:var(--red);border:1px solid var(--rbrd);border-radius:7px;font-size:11px;padding:5px 12px;cursor:pointer;font-family:var(--sans)">Smazat</button>`:'<span style="font-family:var(--mono);font-size:10px;color:var(--g2)">Nelze smazat<br>v rezervaci</span>'}
           </div>
         </div>
       `).join('');
@@ -5207,12 +5225,16 @@ async function loadAdmin(){
   const pending=admL.filter(l=>l.status==='pending');
   const p=pending.length;
   const a=admL.filter(l=>l.status==='active').length;
-  const s=admL.filter(l=>l.status==='sold'||l.status==='reserved').length;
+  const reservedCount=admL.filter(l=>l.status==='reserved').length;
+  const s=admL.filter(l=>l.status==='sold').length;
   const rev=admL.filter(l=>l.status==='sold').reduce((sum,l)=>sum+Math.round((parseInt(l.price)||0)*.15),0);
   document.getElementById('adm-p').textContent=p;
-  document.getElementById('adm-a').textContent=a;
+  document.getElementById('adm-a').textContent=a+(reservedCount>0?' +'+reservedCount+' rez.':'');
   document.getElementById('adm-s').textContent=s;
   document.getElementById('adm-r').textContent=fp(rev)+' Kč';
+  // Badge na Aktivní tabu
+  const rcBadge=document.getElementById('adm-reserved-count');
+  if(rcBadge){rcBadge.textContent=reservedCount+' rezerv.';rcBadge.style.display=reservedCount>0?'inline':'none';}
 
   // Pending alert banner
   const alert=document.getElementById('adm-pending-alert');
@@ -5488,16 +5510,46 @@ async function admBanUser(uid){
 }
 
 function renderAdm(f){
-  let list=f==='all'?[...admL]:admL.filter(l=>l.status===f);
   const el=document.getElementById('adm-rows');
   if(!el) return;
+
+  // Speciální view: "active" zobrazí aktivní + rezervované ve dvou skupinách
+  // "sold" zobrazí pouze prodané
+  let list;
+  if(f==='active'){
+    list=admL.filter(l=>l.status==='active'||l.status==='reserved');
+  } else if(f==='all'){
+    list=[...admL];
+  } else {
+    list=admL.filter(l=>l.status===f);
+  }
 
   if(!list.length){
     el.innerHTML=`<div class="empty" style="padding:40px"><div class="ei">${f==='pending'?'✅':'📭'}</div><div class="et">${f==='pending'?'Žádné inzeráty čekají na schválení':'Žádné záznamy'}</div></div>`;
     return;
   }
 
-  el.innerHTML=list.map(l=>{
+  // Pro "active" view: nejdřív aktivní, pak rezervované s separátorem
+  if(f==='active'){
+    const active=list.filter(l=>l.status==='active');
+    const reserved=list.filter(l=>l.status==='reserved');
+    let html='';
+    if(active.length){
+      html+=`<div style="font-family:var(--mono);font-size:10px;color:var(--g2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;padding:6px 0;border-bottom:1px solid var(--border)">✓ Aktivní inzeráty (${active.length})</div>`;
+      html+=active.map(l=>renderAdmCard(l)).join('');
+    }
+    if(reserved.length){
+      html+=`<div style="font-family:var(--mono);font-size:10px;color:var(--amber);text-transform:uppercase;letter-spacing:.08em;margin:18px 0 10px;padding:6px 0;border-bottom:1px solid rgba(245,158,11,.3)">🔒 Rezervováno — čeká na platbu (${reserved.length})</div>`;
+      html+=reserved.map(l=>renderAdmCard(l)).join('');
+    }
+    el.innerHTML=html;
+    return;
+  }
+
+  el.innerHTML=list.map(l=>renderAdmCard(l)).join('');
+}
+
+function renderAdmCard(l){
     const base=parseInt(l.price)||0;
     const total=Math.round(base*1.15);
     const fee=Math.round(base*.15);
@@ -5554,8 +5606,13 @@ function renderAdm(f){
         `:''}
         ${l.status==='active'?`
           <button onclick="admUpd(${lid},'reserved')" style="background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.4);border-radius:var(--r2);padding:8px 16px;font-size:12px;font-weight:600;color:var(--amber);cursor:pointer;font-family:var(--sans)">🔒 Rezervováno</button>
-          <button onclick="admUpd(${lid},'sold')" style="background:rgba(255,85,0,.15);border:1px solid rgba(255,85,0,.4);border-radius:var(--r2);padding:8px 16px;font-size:12px;font-weight:600;color:var(--orange);cursor:pointer;font-family:var(--sans)">Označit jako prodáno</button>
+          <button onclick="admUpd(${lid},'sold')" style="background:rgba(255,85,0,.15);border:1px solid rgba(255,85,0,.4);border-radius:var(--r2);padding:8px 16px;font-size:12px;font-weight:600;color:var(--orange);cursor:pointer;font-family:var(--sans)">💰 Prodáno</button>
           <button onclick="admUpd(${lid},'rejected')" style="background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.25);border-radius:var(--r2);padding:8px 16px;font-size:12px;font-weight:600;color:#f87171;cursor:pointer;font-family:var(--sans)">Skrýt</button>
+        `:''}
+        ${l.status==='reserved'?`
+          <div style="display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:10px;color:#f59e0b;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);border-radius:var(--r2);padding:6px 10px">🔒 Rezervováno — čeká na platbu od kupujícího</div>
+          <button onclick="admUpd(${lid},'sold')" style="background:rgba(255,85,0,.15);border:1px solid rgba(255,85,0,.4);border-radius:var(--r2);padding:8px 16px;font-size:12px;font-weight:600;color:var(--orange);cursor:pointer;font-family:var(--sans)">💰 Platba přijata → Prodáno</button>
+          <button onclick="admUpd(${lid},'active')" style="background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.2);border-radius:var(--r2);padding:8px 16px;font-size:12px;font-weight:600;color:var(--green);cursor:pointer;font-family:var(--sans)">↩ Zrušit rezervaci</button>
         `:''}
         ${l.status==='rejected'?`
           <button onclick="admUpd(${lid},'active')" style="background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);border-radius:var(--r2);padding:8px 16px;font-size:12px;font-weight:600;color:var(--green);cursor:pointer;font-family:var(--sans)">↩ Obnovit jako aktivní</button>
@@ -5564,14 +5621,25 @@ function renderAdm(f){
         <button onclick="admDel(${lid})" style="margin-left:auto;background:none;border:1px solid rgba(239,68,68,.2);border-radius:var(--r2);padding:7px 14px;font-size:11px;color:var(--g2);cursor:pointer;font-family:var(--sans)" onmouseover="this.style.color='#f87171';this.style.borderColor='rgba(239,68,68,.5)'" onmouseout="this.style.color='var(--g2)';this.style.borderColor='rgba(239,68,68,.2)'">🗑 Smazat</button>
       </div>
     </div>`;
-  }).join('');
 }
 
 async function admUpd(id,status){
   const{error}=await sb.from('listings').update({status}).eq('id',id);
   if(error){toast('Chyba: '+error.message,'error');return;}
-  const m={active:'✅ Schváleno a zveřejněno',rejected:'Inzerát zamítnut',sold:'Označeno jako prodáno',pending:'Vráceno do fronty'};
+  const m={active:'✅ Schváleno a zveřejněno',rejected:'Inzerát zamítnut',sold:'✅ Označeno jako prodáno',reserved:'🔒 Označeno jako rezervováno',pending:'Vráceno do fronty'};
   toast(m[status]||'OK','success');
+  if(status==='reserved'||status==='sold'){
+    try{
+      const listing=admAllL.find(l=>l.id===id);
+      if(listing){
+        await fetch('/api/seller-notification',{
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({seller_email:listing.seller_email,status,platform:listing.platform,followers:listing.followers,niche:listing.niche,listing_id:listing.id})
+        });
+      }
+    }catch(e){console.warn('Seller notify:',e);}
+  }
   loadAdmin();loadPub();
 }
 
@@ -6140,44 +6208,67 @@ input[type=range].val-slider::-moz-range-thumb{width:20px;height:20px;border-rad
 
   <!-- GATE: email + telefon před výsledky -->
   <div class="val-card h" id="vs-gate">
-    <div class="val-step-label" style="color:var(--orange)">Poslední krok</div>
-    <div class="val-step-title">Kam ti pošleme výsledky?</div>
-    <div class="val-step-desc">Zadej kontakt a okamžitě zobrazíme odhadovanou hodnotu tvého účtu. Neposíláme spam — pouze výsledky a případně relevantní nabídky kupujících.</div>
+    <div class="val-step-label" style="color:var(--orange)">Poslední krok — Výsledky</div>
+    <div class="val-step-title">Vytvoř si účet a zobraz výsledky</div>
+    <div class="val-step-desc" style="margin-bottom:22px">Ohodnocení je zdarma. Stačí se zaregistrovat — výsledky uvidíš okamžitě a účet využiješ i pro prodej nebo nákup na UlovProfil.</div>
 
-    <div class="fg" style="margin-bottom:14px">
-      <label class="fl">E-mail *</label>
-      <input type="email" class="fi" id="v-gate-email" placeholder="tvuj@email.cz" style="font-size:15px;padding:12px 14px">
-      <div class="fhint">Výsledky ohodnocení ti zašleme i na email pro budoucí referenci.</div>
+    <!-- Pokud je uživatel již přihlášen -->
+    <div id="v-gate-logged-in" style="display:none;background:var(--gdim);border:1px solid var(--gbrd);border-radius:var(--r2);padding:14px 16px;margin-bottom:18px;font-size:13px;color:var(--green)">
+      ✓ Jsi přihlášen — výsledky se zobrazí ihned.
     </div>
-    <div class="fg" style="margin-bottom:20px">
-      <label class="fl">Telefon *</label>
-      <div style="display:flex;gap:8px">
-        <select class="fsel" id="v-gate-prefix" style="width:100px;flex-shrink:0;padding:12px 8px;font-size:14px">
-          <option value="+420">🇨🇿 +420</option>
-          <option value="+421">🇸🇰 +421</option>
-          <option value="+49">🇩🇪 +49</option>
-          <option value="+43">🇦🇹 +43</option>
-          <option value="+48">🇵🇱 +48</option>
-          <option value="+44">🇬🇧 +44</option>
-          <option value="+1">🇺🇸 +1</option>
-        </select>
-        <input type="tel" class="fi" id="v-gate-phone" placeholder="606 123 456" style="font-size:15px;padding:12px 14px;flex:1">
+
+    <!-- Registrační formulář (skrytý pokud je přihlášen) -->
+    <div id="v-gate-form">
+      <div class="fg" style="margin-bottom:14px">
+        <label class="fl">Uživatelské jméno *</label>
+        <input type="text" class="fi" id="v-gate-name" placeholder="Tvoje přezdívka" style="font-size:15px;padding:12px 14px" autocomplete="username">
       </div>
-      <div class="fhint">Slouží pro případný kontakt od ověřených kupujících z naší platformy.</div>
-    </div>
+      <div class="fg" style="margin-bottom:14px">
+        <label class="fl">E-mail *</label>
+        <input type="email" class="fi" id="v-gate-email" placeholder="tvuj@email.cz" style="font-size:15px;padding:12px 14px" autocomplete="email">
+      </div>
+      <div class="fg" style="margin-bottom:14px">
+        <label class="fl">Telefon *</label>
+        <div style="display:flex;gap:8px">
+          <select class="fsel" id="v-gate-prefix" style="width:100px;flex-shrink:0;padding:12px 8px;font-size:14px">
+            <option value="+420">🇨🇿 +420</option>
+            <option value="+421">🇸🇰 +421</option>
+            <option value="+49">🇩🇪 +49</option>
+            <option value="+43">🇦🇹 +43</option>
+            <option value="+48">🇵🇱 +48</option>
+            <option value="+44">🇬🇧 +44</option>
+            <option value="+1">🇺🇸 +1</option>
+          </select>
+          <input type="tel" class="fi" id="v-gate-phone" placeholder="606 123 456" style="font-size:15px;padding:12px 14px;flex:1" autocomplete="tel">
+        </div>
+      </div>
+      <div class="fg" style="margin-bottom:14px">
+        <label class="fl">Heslo *</label>
+        <input type="password" class="fi" id="v-gate-pass" placeholder="Alespoň 6 znaků" style="font-size:15px;padding:12px 14px" autocomplete="new-password">
+      </div>
+      <div class="fg" style="margin-bottom:20px">
+        <label class="fl">Heslo znovu *</label>
+        <input type="password" class="fi" id="v-gate-pass2" placeholder="Zopakuj heslo" style="font-size:15px;padding:12px 14px" autocomplete="new-password">
+      </div>
 
-    <!-- Trust signály -->
-    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px">
-      <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--g2)"><span style="color:var(--green)">🔒</span> Údaje jsou v bezpečí</div>
-      <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--g2)"><span style="color:var(--green)">✓</span> Žádný spam</div>
-      <div style="display:flex;align-items:center;gap=5px;font-size:11px;color:var(--g2)"><span style="color:var(--green)">✓</span> Výsledky zobrazíme ihned</div>
+      <!-- Trust signály -->
+      <div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:18px">
+        <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--g2)"><span style="color:var(--green)">🔒</span> Bezpečné přihlášení</div>
+        <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--g2)"><span style="color:var(--green)">✓</span> Registrace zdarma</div>
+        <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--g2)"><span style="color:var(--green)">✓</span> Výsledky ihned</div>
+      </div>
+
+      <div style="font-size:12px;color:var(--g2);margin-bottom:16px">
+        Už máš účet? <span onclick="go('auth','login');closeMo('mo-add')" style="color:var(--orange);cursor:pointer;text-decoration:underline">Přihlás se</span> a výsledky uvidíš ihned.
+      </div>
     </div>
 
     <div id="v-gate-err" style="font-family:var(--mono);font-size:12px;color:var(--red);margin-bottom:12px;display:none"></div>
     <div class="val-nav">
       <button class="val-back" onclick="prevStep(6)">← Zpět</button>
       <button class="val-next" id="v-gate-btn" onclick="submitGate()">
-        🔬 Zobrazit výsledky →
+        <span id="v-gate-btn-txt">Vytvořit účet a zobrazit výsledky →</span>
+        <span id="v-gate-spin" style="display:none;width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite"></span>
       </button>
     </div>
   </div>
@@ -6947,8 +7038,8 @@ function resetValuator(){
   for(let i=1;i<=5;i++) document.getElementById('vs-'+i).classList[i===1?'remove':'add']('h');
   document.getElementById('vs-result').classList.add('h');
   document.getElementById('vs-gate').classList.add('h');
-  document.getElementById('v-gate-email').value='';
-  document.getElementById('v-gate-phone').value='';
+  ['v-gate-name','v-gate-email','v-gate-phone','v-gate-pass','v-gate-pass2'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  const gErr=document.getElementById('v-gate-err');if(gErr)gErr.style.display='none';
   document.querySelectorAll('.val-plat-btn').forEach(b=>b.classList.remove('selected'));
   document.querySelectorAll('.val-pill').forEach(p=>p.classList.remove('selected'));
   document.querySelectorAll('.val-toggle-row').forEach(r=>r.classList.remove('on'));
@@ -7123,7 +7214,22 @@ function calcValue(){
 
   vState._rounded=rounded;vState._low=low;vState._high=high;
   document.getElementById('vs-5').classList.add('h');
+
+  // Pokud je uživatel přihlášen — přeskoč gate a zobraz rovnou výsledky
+  if(user){
+    showValResults();
+    return;
+  }
+
   document.getElementById('vs-gate').classList.remove('h');
+  // Aktualizuj gate UI dle stavu přihlášení
+  const loggedInNote = document.getElementById('v-gate-logged-in');
+  const gateForm = document.getElementById('v-gate-form');
+  const gateBtn = document.getElementById('v-gate-btn');
+  const gateBtnTxt = document.getElementById('v-gate-btn-txt');
+  if(loggedInNote) loggedInNote.style.display = user ? 'block' : 'none';
+  if(gateForm) gateForm.style.display = user ? 'none' : 'block';
+  if(gateBtnTxt) gateBtnTxt.textContent = user ? 'Zobrazit výsledky →' : 'Vytvořit účet a zobrazit výsledky →';
   updateProgress(5);
   window.scrollTo(0,0);
 }
@@ -7246,122 +7352,79 @@ function showValResults(){
   window.scrollTo(0,0);
 }
 
-// Resend klíč odstraněn z frontendu — emaily se odesílají přes /api/valuator-email
-
-// Client-side rate limit pro valuator gate (backup k DB triggeru)
-const _gateAttempts={};
-function _gateRateOk(email){
-  const now=Date.now();
-  const key=email.toLowerCase().trim();
-  if(!_gateAttempts[key]){_gateAttempts[key]=[];} 
-  _gateAttempts[key]=_gateAttempts[key].filter(t=>now-t<86400000); // 24h okno
-  if(_gateAttempts[key].length>=5) return false;
-  _gateAttempts[key].push(now);
-  return true;
-}
+// Valuator — výsledky se zobrazí po registraci nebo přihlášení
 
 async function submitGate(){
-  const email = document.getElementById('v-gate-email').value.trim();
-  const phone = document.getElementById('v-gate-phone').value.trim();
   const err = document.getElementById('v-gate-err');
   const btn = document.getElementById('v-gate-btn');
+  const btnTxt = document.getElementById('v-gate-btn-txt');
+  const spin = document.getElementById('v-gate-spin');
   err.style.display='none';
 
-  // Validace email
-  if(!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){
-    err.textContent='Zadej platný e-mail.'; err.style.display='block'; return;
-  }
-  // Validace telefon — aspoň 8 číslic
-  const digits = phone.replace(/\D/g,'');
-  if(!phone || digits.length < 8){
-    err.textContent='Zadej platné telefonní číslo (min. 8 číslic).'; err.style.display='block'; return;
-  }
-  // Rate limit — max 5 odeslání za 24h per email
-  if(!_gateRateOk(email)){
-    err.textContent='Příliš mnoho pokusů. Zkus to znovu za 24 hodin.'; err.style.display='block'; return;
+  // Pokud je uživatel již přihlášen — rovnou zobraz výsledky
+  if(user){
+    showValResults();
+    return;
   }
 
-  btn.textContent='Odesílám výsledky...';
-  btn.disabled=true;
-
+  const name = (document.getElementById('v-gate-name')?.value||'').trim();
+  const email = document.getElementById('v-gate-email').value.trim();
+  const phoneNum = document.getElementById('v-gate-phone').value.replace(/\s/g,'').trim();
+  const pass = document.getElementById('v-gate-pass').value;
+  const pass2 = document.getElementById('v-gate-pass2').value;
   const prefix = document.getElementById('v-gate-prefix').value;
-  const fullPhone = prefix + ' ' + phone;
+
+  // Validace
+  if(!name){ err.textContent='Zadej uživatelské jméno.'; err.style.display='block'; return; }
+  if(!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){ err.textContent='Zadej platný e-mail.'; err.style.display='block'; return; }
+  if(!phoneNum || phoneNum.replace(/\D/g,'').length < 8){ err.textContent='Zadej platné telefonní číslo (min. 8 číslic).'; err.style.display='block'; return; }
+  if(!pass || pass.length < 6){ err.textContent='Heslo musí mít alespoň 6 znaků.'; err.style.display='block'; return; }
+  if(pass !== pass2){ err.textContent='Hesla se neshodují.'; err.style.display='block'; return; }
+
+  const fullPhone = prefix + phoneNum;
+
+  btn.disabled=true;
+  if(btnTxt) btnTxt.textContent='Registruji...';
+  if(spin) spin.style.display='inline-block';
+
+  // Registrace přes Supabase Auth
+  const {data, error: regErr} = await sb.auth.signUp({
+    email,
+    password: pass,
+    options: { data: { phone: fullPhone } }
+  });
+
+  if(regErr){
+    err.textContent = regErr.message==='User already registered'
+      ? 'Účet s tímto e-mailem již existuje. Přihlas se místo toho.'
+      : regErr.message;
+    err.style.display='block';
+    btn.disabled=false;
+    if(btnTxt) btnTxt.textContent='Vytvořit účet a zobrazit výsledky →';
+    if(spin) spin.style.display='none';
+    return;
+  }
+
+  // Ulož profil do profiles tabulky
+  if(data?.user){
+    try{
+      await sb.from('profiles').insert({
+        user_id: data.user.id,
+        username: name,
+        phone: fullPhone,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      });
+    }catch(e){ console.warn('Profile insert:', e); }
+  }
+
   const rounded = vState._rounded;
   const low = vState._low;
   const high = vState._high;
   const platform = vState.platform;
   const followers = vState.followers.toLocaleString('cs-CZ');
 
-  // Ulož kontakt do Supabase
-  try {
-    await sb.from('leads').insert({
-      email, phone: fullPhone,
-      platform, followers: vState.followers,
-      estimated_value: rounded,
-      created_at: new Date().toISOString()
-    });
-  } catch(e){}
-
-  // Pošli email přes Resend
-  const emailHtml = `
-<!DOCTYPE html>
-<html lang="cs">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-<body style="margin:0;padding:0;background:#0a0a0a;font-family:'Segoe UI',Arial,sans-serif">
-  <div style="max-width:560px;margin:0 auto;padding:32px 16px">
-
-    <!-- Header -->
-    <div style="text-align:center;margin-bottom:32px">
-      <div style="display:inline-block;background:#FF5500;color:#fff;font-weight:700;font-size:18px;padding:8px 18px;border-radius:6px;letter-spacing:-.01em">UlovProfil</div>
-      <div style="color:#666;font-size:12px;margin-top:8px;font-family:monospace">ulovprofil.cz</div>
-    </div>
-
-    <!-- Výsledek -->
-    <div style="background:#111;border:1px solid #222;border-radius:16px;overflow:hidden;margin-bottom:16px">
-      <div style="background:linear-gradient(135deg,#FF5500,#FF7733);padding:28px;text-align:center">
-        <div style="color:rgba(255,255,255,.8);font-size:12px;font-family:monospace;text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px">Odhadovaná tržní hodnota</div>
-        <div style="color:#fff;font-size:48px;font-weight:700;font-family:monospace;letter-spacing:-.03em;line-height:1">${rounded.toLocaleString('cs-CZ')} Kč</div>
-        <div style="color:rgba(255,255,255,.7);font-size:13px;font-family:monospace;margin-top:8px">${low.toLocaleString('cs-CZ')} – ${high.toLocaleString('cs-CZ')} Kč (tržní rozmezí)</div>
-      </div>
-      <div style="padding:20px 24px">
-        <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #1e1e1e">
-          <span style="color:#666;font-size:13px">Platforma</span>
-          <span style="color:#fff;font-size:13px;font-weight:600">${platform}</span>
-        </div>
-        <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #1e1e1e">
-          <span style="color:#666;font-size:13px">Sledující / členů</span>
-          <span style="color:#fff;font-size:13px;font-weight:600">${followers}</span>
-        </div>
-        <div style="display:flex;justify-content:space-between;padding:10px 0">
-          <span style="color:#666;font-size:13px">Odhad vytvořen</span>
-          <span style="color:#fff;font-size:13px;font-family:monospace">${new Date().toLocaleDateString('cs-CZ')}</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- Orientační info -->
-    <div style="background:#111;border:1px solid #1e1e1e;border-radius:10px;padding:16px 20px;margin-bottom:16px">
-      <div style="color:#f59e0b;font-size:11px;font-family:monospace;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">⚠️ Orientační odhad</div>
-      <div style="color:#888;font-size:13px;line-height:1.6">Výsledná cena závisí na aktuální poptávce, kompletnosti dokumentace a době prodeje. CZ/SK trh je variabilní — reálná cena se může lišit o ±40 %.</div>
-    </div>
-
-    <!-- CTA -->
-    <div style="background:linear-gradient(135deg,rgba(255,85,0,.1),rgba(255,85,0,.05));border:1px solid rgba(255,85,0,.25);border-radius:10px;padding:20px 24px;text-align:center;margin-bottom:24px">
-      <div style="color:#fff;font-size:15px;font-weight:700;margin-bottom:6px">Připravený prodat?</div>
-      <div style="color:#888;font-size:13px;margin-bottom:16px">Zaregistruj nabídku zdarma. Platíš pouze při úspěšném prodeji.</div>
-      <a href="https://ulovprofil.cz" style="display:inline-block;background:#FF5500;color:#fff;font-weight:700;font-size:14px;padding:12px 28px;border-radius:8px;text-decoration:none">Prodat účet na UlovProfil →</a>
-    </div>
-
-    <!-- Footer -->
-    <div style="text-align:center;color:#444;font-size:11px;font-family:monospace;line-height:1.7">
-      UlovProfil — První český marketplace pro prodej sociálních účtů<br>
-      <a href="https://ulovprofil.cz" style="color:#FF5500;text-decoration:none">ulovprofil.cz</a>
-    </div>
-  </div>
-<\/body>
-<\/html>`;
-
-  // Email se odesílá přes serverless API endpoint (Resend klíč není ve frontendu)
+  // Volitelně pošli email s výsledky
   try {
     await fetch('/api/valuator-email', {
       method: 'POST',
@@ -7376,6 +7439,14 @@ async function submitGate(){
       })
     });
   } catch(e){}
+
+  // Aktualizuj nav (uživatel je nyní přihlášen)
+  try{ await init(); }catch(e){}
+
+  toast('Účet vytvořen! Vítej na UlovProfil 🎉', 'success');
+  if(btnTxt) btnTxt.textContent='Vytvořit účet a zobrazit výsledky →';
+  if(spin) spin.style.display='none';
+  btn.disabled=false;
 
   showValResults();
 }
