@@ -7440,14 +7440,18 @@ async function submitGate(){
     });
   } catch(e){}
 
-  // Aktualizuj nav (uživatel je nyní přihlášen)
-  try{ await init(); }catch(e){}
+  // Aktualizuj user a nav BEZ volání init() — init() by spustil handleRoute() a přesměroval na home
+  try{
+    const {data:{session}} = await sb.auth.getSession();
+    if(session){ user=session.user; setNavU(user); }
+  }catch(e){}
 
   toast('Účet vytvořen! Vítej na UlovProfil 🎉', 'success');
   if(btnTxt) btnTxt.textContent='Vytvořit účet a zobrazit výsledky →';
   if(spin) spin.style.display='none';
   btn.disabled=false;
 
+  // Výsledky zobrazíme přímo — zůstaneme na valuatoru
   showValResults();
 }
 
