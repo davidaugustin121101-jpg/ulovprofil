@@ -1163,177 +1163,180 @@ pre{white-space:pre-wrap;word-break:break-word}
 
 <!-- HOW IT WORKS PAGE -->
 <div class="page h" id="page-how">
-  <div style="padding:32px 4% 0;max-width:1200px;margin:0 auto">
-    <button onclick="go('home')" style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);padding:7px 14px;font-size:12px;color:var(--g1);cursor:pointer;font-family:var(--sans);margin-bottom:8px">← Zpět na marketplace</button>
-  </div><div id="how-section" style="background:var(--bg2);border-top:1px solid var(--border);border-bottom:1px solid var(--border)">
-    <div class="wrap sec">
+  <div style="max-width:1100px;margin:0 auto;padding:36px 6% 80px">
 
-      <!-- INTRO CENTERED -->
-      <div style="text-align:center;max-width:680px;margin:0 auto 56px">
-        <div style="font-family:var(--mono);font-size:11px;color:var(--orange);text-transform:uppercase;letter-spacing:.12em;margin-bottom:16px">Vítejte na UlovProfil</div>
-        <div style="font-size:clamp(28px,4vw,44px);font-weight:700;letter-spacing:-.02em;margin-bottom:20px;line-height:1.15">Jak to funguje?</div>
-        <div style="font-size:16px;color:var(--g1);line-height:1.8">UlovProfil je největší česko-slovenský marketplace pro bezpečný nákup a prodej sociálních sítí. Sami žádné profily nevlastníme. Fungujeme jako bezpečný prostředník (escrow), který dává lidem možnost legálně a bez rizika zpeněžit účty, které už nevyužijí – nebo naopak získat hotové publikum s organickým dosahem, které posune jejich byznys dopředu.</div>
-      </div>
+    <!-- Back -->
+    <button onclick="go('home')" style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);padding:7px 14px;font-size:12px;color:var(--g1);cursor:pointer;font-family:var(--sans);margin-bottom:40px">← Zpět na marketplace</button>
 
-      <!-- PROČ ULOVPROFIL -->
-      <div style="font-family:var(--mono);font-size:10px;color:var(--orange);text-transform:uppercase;letter-spacing:.1em;margin-bottom:14px">Proč UlovProfil</div>
-      <div style="font-size:clamp(22px,3.5vw,36px);font-weight:700;letter-spacing:-.02em;margin-bottom:10px">Prodávat účet cizímu člověku přes DM<br>je čistý hazard.</div>
-      <div style="font-size:15px;color:var(--g1);max-width:620px;line-height:1.75;margin-bottom:40px">Každý den se na Facebook skupinách a Discord serverech točí desítky tisíc korun. Transakce probíhají „na dobré slovo". Výsledek? Jeden riskuje peníze, druhý rozjetý profil. UlovProfil tohle pravidlo džungle definitivně ruší.</div>
+    <!-- INTRO -->
+    <div style="text-align:center;max-width:700px;margin:0 auto 64px">
+      <div style="font-family:var(--mono);font-size:11px;color:var(--orange);text-transform:uppercase;letter-spacing:.12em;margin-bottom:14px">Vítejte na UlovProfil</div>
+      <h1 style="font-size:clamp(30px,5vw,48px);font-weight:700;letter-spacing:-.02em;margin:0 0 20px;line-height:1.12">Jak to funguje?</h1>
+      <p style="font-size:16px;color:var(--g1);line-height:1.85;margin:0">UlovProfil je největší česko-slovenský marketplace pro bezpečný nákup a prodej sociálních sítí. Fungujeme jako bezpečný prostředník (escrow) — dáváme lidem možnost legálně a bez rizika zpeněžit účty, které už nevyužijí, nebo naopak získat hotové publikum s organickým dosahem.</p>
+    </div>
 
-      <!-- PAIN POINTS vs SOLUTION -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:40px">
+    <!-- PROČ -->
+    <div style="margin-bottom:16px">
+      <div style="font-family:var(--mono);font-size:10px;color:var(--orange);text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px">Proč UlovProfil</div>
+      <h2 style="font-size:clamp(22px,4vw,38px);font-weight:700;letter-spacing:-.02em;margin:0 0 14px;line-height:1.15">Prodávat účet cizímu člověku přes DM<br>je čistý hazard.</h2>
+      <p style="font-size:15px;color:var(--g1);max-width:640px;line-height:1.8;margin:0 0 40px">Každý den se na Facebook skupinách a Discord serverech točí desítky tisíc korun. Transakce probíhají „na dobré slovo". Výsledek? Jeden riskuje peníze, druhý rozjetý profil. UlovProfil tohle pravidlo džungle definitivně ruší.</p>
+    </div>
 
-        <!-- VLEVO: BOLESTI -->
-        <div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--r3);padding:28px">
-          <div style="font-family:var(--mono);font-size:10px;color:var(--g2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:20px;display:flex;align-items:center;gap:8px">
-            <span style="width:8px;height:8px;border-radius:50%;background:var(--g3);display:inline-block"></span>
-            Bez platformy (FB skupiny, Discord, DM)
-          </div>
-          <div style="display:flex;flex-direction:column;gap:12px">
-            <div style="display:flex;gap:12px;align-items:flex-start">
-              <span style="color:var(--red);font-size:14px;flex-shrink:0;margin-top:1px">✗</span>
-              <div><div style="font-size:13px;font-weight:600;color:var(--white);margin-bottom:2px">Posíláš peníze napřed a modlíš se</div><div style="font-size:12px;color:var(--g2);line-height:1.5">Buď pošleš peníze a prodejce tě zablokuje, nebo pošleš údaje a kupující nezaplatí.</div></div>
-            </div>
-            <div style="display:flex;gap:12px;align-items:flex-start">
-              <span style="color:var(--red);font-size:14px;flex-shrink:0;margin-top:1px">✗</span>
-              <div><div style="font-size:13px;font-weight:600;color:var(--white);margin-bottom:2px">Statistiky z Photoshopu</div><div style="font-size:12px;color:var(--g2);line-height:1.5">Screenshoty z DM nic nedokazují. Falešní followeři a koupené lajky se dnes dají maskovat snadno.</div></div>
-            </div>
-            <div style="display:flex;gap:12px;align-items:flex-start">
-              <span style="color:var(--red);font-size:14px;flex-shrink:0;margin-top:1px">✗</span>
-              <div><div style="font-size:13px;font-weight:600;color:var(--white);margin-bottom:2px">Při podvodu nemáš zastání</div><div style="font-size:12px;color:var(--g2);line-height:1.5">Admin FB skupiny tě vyhodí a Policie ČR digitální podvody pod 10 000 Kč odloží na neurčito.</div></div>
-            </div>
-            <div style="display:flex;gap:12px;align-items:flex-start">
-              <span style="color:var(--red);font-size:14px;flex-shrink:0;margin-top:1px">✗</span>
-              <div><div style="font-size:13px;font-weight:600;color:var(--white);margin-bottom:2px">Sdílíš osobní údaje s cizími lidmi</div><div style="font-size:12px;color:var(--g2);line-height:1.5">Číslo účtu, mail, telefon, WhatsApp... dáváte cizímu člověku do ruky osobní data.</div></div>
-            </div>
-            <div style="display:flex;gap:12px;align-items:flex-start">
-              <span style="color:var(--red);font-size:14px;flex-shrink:0;margin-top:1px">✗</span>
-              <div><div style="font-size:13px;font-weight:600;color:var(--white);margin-bottom:2px">Slovní dohoda není důkaz</div><div style="font-size:12px;color:var(--g2);line-height:1.5">Když se druhá strana po týdnu rozhodne vzít si účet přes podporu zpět, nemáš v ruce vůbec nic.</div></div>
-            </div>
-            <div style="display:flex;gap:12px;align-items:flex-start">
-              <span style="color:var(--red);font-size:14px;flex-shrink:0;margin-top:1px">✗</span>
-              <div><div style="font-size:13px;font-weight:600;color:var(--white);margin-bottom:2px">Zahraniční platformy bez podpory</div><div style="font-size:12px;color:var(--g2);line-height:1.5">FameSwap nebo SWAPD sice fungují, ale komunikuješ v angličtině, platíš v dolarech a podpora odepisuje týdny.</div></div>
-            </div>
-          </div>
+    <!-- PAIN vs SOLUTION grid -->
+    <div id="why-compare" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:48px">
+
+      <!-- VLEVO: BOLESTI -->
+      <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--r3);padding:32px">
+        <div style="font-family:var(--mono);font-size:10px;color:var(--g2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:22px;display:flex;align-items:center;gap:8px">
+          <span style="width:8px;height:8px;border-radius:50%;background:var(--g3);display:inline-block"></span>
+          Bez platformy (FB skupiny, Discord, DM)
         </div>
-
-        <!-- VPRAVO: ŘEŠENÍ -->
-        <div style="background:var(--bg);border:1px solid rgba(255,85,0,.3);border-radius:var(--r3);padding:28px;position:relative;overflow:hidden">
-          <div style="position:absolute;top:0;right:0;width:200px;height:200px;background:radial-gradient(circle,rgba(255,85,0,.06) 0%,transparent 70%);pointer-events:none"></div>
-          <div style="font-family:var(--mono);font-size:10px;color:var(--orange);text-transform:uppercase;letter-spacing:.08em;margin-bottom:20px;display:flex;align-items:center;gap:8px">
-            <span style="width:8px;height:8px;border-radius:50%;background:var(--orange);display:inline-block"></span>
-            UlovProfil (Tvůj bezpečný přístav)
+        <div style="display:flex;flex-direction:column;gap:16px">
+          <div style="display:flex;gap:14px;align-items:flex-start">
+            <span style="color:var(--red);font-size:15px;flex-shrink:0;margin-top:1px">✗</span>
+            <div><div style="font-size:13px;font-weight:600;color:var(--white);margin-bottom:3px">Posíláš peníze napřed a modlíš se</div><div style="font-size:12px;color:var(--g2);line-height:1.6">Buď pošleš peníze a prodejce tě zablokuje, nebo pošleš údaje a kupující nezaplatí.</div></div>
           </div>
-          <div style="display:flex;flex-direction:column;gap:12px">
-            <div style="display:flex;gap:12px;align-items:flex-start">
-              <span style="color:var(--green);font-size:14px;flex-shrink:0;margin-top:1px">✓</span>
-              <div><div style="font-size:13px;font-weight:600;color:var(--white);margin-bottom:2px">Garantovaná úschova</div><div style="font-size:12px;color:var(--g2);line-height:1.5">Peníze nejdou prodejci, ale k nám. Uvolníme je až ve chvíli, kdy potvrdíš, že máš od účtu plný přístup.</div></div>
-            </div>
-            <div style="display:flex;gap:12px;align-items:flex-start">
-              <span style="color:var(--green);font-size:14px;flex-shrink:0;margin-top:1px">✓</span>
-              <div><div style="font-size:13px;font-weight:600;color:var(--white);margin-bottom:2px">Ruční kontrola každého inzerátu</div><div style="font-size:12px;color:var(--g2);line-height:1.5">Než jde profil ven, ověříme reálná data a statistiky. Žádné fejky u nás neprojdou.</div></div>
-            </div>
-            <div style="display:flex;gap:12px;align-items:flex-start">
-              <span style="color:var(--green);font-size:14px;flex-shrink:0;margin-top:1px">✓</span>
-              <div><div style="font-size:13px;font-weight:600;color:var(--white);margin-bottom:2px">Rychlá arbitráž</div><div style="font-size:12px;color:var(--g2);line-height:1.5">Pokud nastane zádrhel, náš tým do toho vstoupí a situaci rozsekne na základě jasných důkazů do 48 hodin.</div></div>
-            </div>
-            <div style="display:flex;gap:12px;align-items:flex-start">
-              <span style="color:var(--green);font-size:14px;flex-shrink:0;margin-top:1px">✓</span>
-              <div><div style="font-size:13px;font-weight:600;color:var(--white);margin-bottom:2px">100% anonymní komunikace</div><div style="font-size:12px;color:var(--g2);line-height:1.5">Všechno – od prvního zájmu až po předání – řešíte bezpečně uvnitř naší platformy.</div></div>
-            </div>
-            <div style="display:flex;gap:12px;align-items:flex-start">
-              <span style="color:var(--green);font-size:14px;flex-shrink:0;margin-top:1px">✓</span>
-              <div><div style="font-size:13px;font-weight:600;color:var(--white);margin-bottom:2px">Černé na bílém</div><div style="font-size:12px;color:var(--g2);line-height:1.5">Celý proces je logovaný a krytý jasnými pravidly. Máš stoprocentní jistotu a podklady pro každou situaci.</div></div>
-            </div>
-            <div style="display:flex;gap:12px;align-items:flex-start">
-              <span style="color:var(--green);font-size:14px;flex-shrink:0;margin-top:1px">✓</span>
-              <div><div style="font-size:13px;font-weight:600;color:var(--white);margin-bottom:2px">Rodný jazyk a koruny</div><div style="font-size:12px;color:var(--g2);line-height:1.5">Jsme první čistě CZ/SK platforma. Vše řešíš v CZK/EUR a s podporou, která ti rozumí.</div></div>
-            </div>
+          <div style="display:flex;gap:14px;align-items:flex-start">
+            <span style="color:var(--red);font-size:15px;flex-shrink:0;margin-top:1px">✗</span>
+            <div><div style="font-size:13px;font-weight:600;color:var(--white);margin-bottom:3px">Statistiky z Photoshopu</div><div style="font-size:12px;color:var(--g2);line-height:1.6">Screenshoty z DM nic nedokazují. Falešní followeři se dají maskovat snadno.</div></div>
+          </div>
+          <div style="display:flex;gap:14px;align-items:flex-start">
+            <span style="color:var(--red);font-size:15px;flex-shrink:0;margin-top:1px">✗</span>
+            <div><div style="font-size:13px;font-weight:600;color:var(--white);margin-bottom:3px">Při podvodu nemáš zastání</div><div style="font-size:12px;color:var(--g2);line-height:1.6">Admin FB skupiny tě vyhodí a Policie ČR digitální podvody pod 10 000 Kč odloží na neurčito.</div></div>
+          </div>
+          <div style="display:flex;gap:14px;align-items:flex-start">
+            <span style="color:var(--red);font-size:15px;flex-shrink:0;margin-top:1px">✗</span>
+            <div><div style="font-size:13px;font-weight:600;color:var(--white);margin-bottom:3px">Sdílíš osobní údaje s cizími lidmi</div><div style="font-size:12px;color:var(--g2);line-height:1.6">Číslo účtu, mail, telefon, WhatsApp... dáváte cizímu člověku do ruky osobní data.</div></div>
+          </div>
+          <div style="display:flex;gap:14px;align-items:flex-start">
+            <span style="color:var(--red);font-size:15px;flex-shrink:0;margin-top:1px">✗</span>
+            <div><div style="font-size:13px;font-weight:600;color:var(--white);margin-bottom:3px">Slovní dohoda není důkaz</div><div style="font-size:12px;color:var(--g2);line-height:1.6">Když se druhá strana po týdnu rozhodne vzít si účet přes podporu zpět, nemáš v ruce vůbec nic.</div></div>
+          </div>
+          <div style="display:flex;gap:14px;align-items:flex-start">
+            <span style="color:var(--red);font-size:15px;flex-shrink:0;margin-top:1px">✗</span>
+            <div><div style="font-size:13px;font-weight:600;color:var(--white);margin-bottom:3px">Zahraniční platformy bez podpory</div><div style="font-size:12px;color:var(--g2);line-height:1.6">FameSwap nebo SWAPD fungují, ale komunikuješ v angličtině, platíš v dolarech a podpora odepisuje týdny.</div></div>
           </div>
         </div>
       </div>
 
-      <!-- STAT ROW -->
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:48px">
-        <div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--r);padding:20px;text-align:center">
-          <div style="font-family:var(--mono);font-size:32px;font-weight:400;color:var(--white);line-height:1;margin-bottom:5px">0 Kč</div>
-          <div style="font-family:var(--mono);font-size:10px;color:var(--g2);text-transform:uppercase;letter-spacing:.07em">ztraceno našimi uživateli na podvodech</div>
+      <!-- VPRAVO: ŘEŠENÍ -->
+      <div style="background:var(--bg2);border:1px solid rgba(255,85,0,.3);border-radius:var(--r3);padding:32px;position:relative;overflow:hidden">
+        <div style="position:absolute;top:0;right:0;width:200px;height:200px;background:radial-gradient(circle,rgba(255,85,0,.06) 0%,transparent 70%);pointer-events:none"></div>
+        <div style="font-family:var(--mono);font-size:10px;color:var(--orange);text-transform:uppercase;letter-spacing:.08em;margin-bottom:22px;display:flex;align-items:center;gap:8px">
+          <span style="width:8px;height:8px;border-radius:50%;background:var(--orange);display:inline-block"></span>
+          UlovProfil (Tvůj bezpečný přístav)
         </div>
-        <div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--r);padding:20px;text-align:center">
-          <div style="font-family:var(--mono);font-size:32px;font-weight:400;color:var(--orange);line-height:1;margin-bottom:5px">48h</div>
-          <div style="font-family:var(--mono);font-size:10px;color:var(--g2);text-transform:uppercase;letter-spacing:.07em">maximální lhůta na důkladné ověření kupovaného účtu</div>
-        </div>
-        <div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--r);padding:20px;text-align:center">
-          <div style="font-family:var(--mono);font-size:32px;font-weight:400;color:var(--white);line-height:1;margin-bottom:5px">100%</div>
-          <div style="font-family:var(--mono);font-size:10px;color:var(--g2);text-transform:uppercase;letter-spacing:.07em">transakcí pod absolutní ochranou našeho escrow systému</div>
-        </div>
-        <div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--r);padding:20px;text-align:center">
-          <div style="font-family:var(--mono);font-size:32px;font-weight:400;color:var(--white);line-height:1;margin-bottom:5px">🇨🇿 🇸🇰</div>
-          <div style="font-family:var(--mono);font-size:10px;color:var(--g2);text-transform:uppercase;letter-spacing:.07em">první a jediná specializovaná platforma pro CZ/SK trh</div>
+        <div style="display:flex;flex-direction:column;gap:16px">
+          <div style="display:flex;gap:14px;align-items:flex-start">
+            <span style="color:var(--green);font-size:15px;flex-shrink:0;margin-top:1px">✓</span>
+            <div><div style="font-size:13px;font-weight:600;color:var(--white);margin-bottom:3px">Garantovaná úschova</div><div style="font-size:12px;color:var(--g2);line-height:1.6">Peníze nejdou prodejci, ale k nám. Uvolníme je až ve chvíli, kdy potvrdíš, že máš od účtu plný přístup.</div></div>
+          </div>
+          <div style="display:flex;gap:14px;align-items:flex-start">
+            <span style="color:var(--green);font-size:15px;flex-shrink:0;margin-top:1px">✓</span>
+            <div><div style="font-size:13px;font-weight:600;color:var(--white);margin-bottom:3px">Ruční kontrola každého inzerátu</div><div style="font-size:12px;color:var(--g2);line-height:1.6">Než jde profil ven, ověříme reálná data a statistiky. Žádné fejky u nás neprojdou.</div></div>
+          </div>
+          <div style="display:flex;gap:14px;align-items:flex-start">
+            <span style="color:var(--green);font-size:15px;flex-shrink:0;margin-top:1px">✓</span>
+            <div><div style="font-size:13px;font-weight:600;color:var(--white);margin-bottom:3px">Rychlá arbitráž</div><div style="font-size:12px;color:var(--g2);line-height:1.6">Pokud nastane zádrhel, náš tým do toho vstoupí a situaci rozsekne na základě jasných důkazů do 48 hodin.</div></div>
+          </div>
+          <div style="display:flex;gap:14px;align-items:flex-start">
+            <span style="color:var(--green);font-size:15px;flex-shrink:0;margin-top:1px">✓</span>
+            <div><div style="font-size:13px;font-weight:600;color:var(--white);margin-bottom:3px">100% anonymní komunikace</div><div style="font-size:12px;color:var(--g2);line-height:1.6">Všechno – od prvního zájmu až po předání – řešíte bezpečně uvnitř naší platformy.</div></div>
+          </div>
+          <div style="display:flex;gap:14px;align-items:flex-start">
+            <span style="color:var(--green);font-size:15px;flex-shrink:0;margin-top:1px">✓</span>
+            <div><div style="font-size:13px;font-weight:600;color:var(--white);margin-bottom:3px">Černé na bílém</div><div style="font-size:12px;color:var(--g2);line-height:1.6">Celý proces je logovaný a krytý jasnými pravidly. Máš stoprocentní jistotu a podklady pro každou situaci.</div></div>
+          </div>
+          <div style="display:flex;gap:14px;align-items:flex-start">
+            <span style="color:var(--green);font-size:15px;flex-shrink:0;margin-top:1px">✓</span>
+            <div><div style="font-size:13px;font-weight:600;color:var(--white);margin-bottom:3px">Rodný jazyk a koruny</div><div style="font-size:12px;color:var(--g2);line-height:1.6">Jsme první čistě CZ/SK platforma. Vše řešíš v CZK/EUR a s podporou, která ti rozumí.</div></div>
+          </div>
         </div>
       </div>
+    </div>
 
+    <!-- STATS -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:64px">
+      <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:24px;text-align:center">
+        <div style="font-family:var(--mono);font-size:32px;font-weight:700;color:var(--white);line-height:1;margin-bottom:8px">0 Kč</div>
+        <div style="font-family:var(--mono);font-size:10px;color:var(--g2);text-transform:uppercase;letter-spacing:.07em;line-height:1.5">ztraceno našimi uživateli na podvodech</div>
+      </div>
+      <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:24px;text-align:center">
+        <div style="font-family:var(--mono);font-size:32px;font-weight:700;color:var(--orange);line-height:1;margin-bottom:8px">48h</div>
+        <div style="font-family:var(--mono);font-size:10px;color:var(--g2);text-transform:uppercase;letter-spacing:.07em;line-height:1.5">maximální lhůta na důkladné ověření kupovaného účtu</div>
+      </div>
+      <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:24px;text-align:center">
+        <div style="font-family:var(--mono);font-size:32px;font-weight:700;color:var(--white);line-height:1;margin-bottom:8px">100%</div>
+        <div style="font-family:var(--mono);font-size:10px;color:var(--g2);text-transform:uppercase;letter-spacing:.07em;line-height:1.5">transakcí pod absolutní ochranou našeho escrow systému</div>
+      </div>
+      <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:24px;text-align:center">
+        <div style="font-size:28px;line-height:1;margin-bottom:8px">🇨🇿 🇸🇰</div>
+        <div style="font-family:var(--mono);font-size:10px;color:var(--g2);text-transform:uppercase;letter-spacing:.07em;line-height:1.5">první a jediná specializovaná platforma pro CZ/SK trh</div>
+      </div>
+    </div>
 
-      <!-- JAK TO FUNGUJE -->
-      <div style="font-family:var(--mono);font-size:10px;color:var(--orange);text-transform:uppercase;letter-spacing:.1em;margin-bottom:11px">Jak to funguje</div>
-      <div style="font-size:clamp(22px,3.5vw,36px);font-weight:700;letter-spacing:-.02em">4 jednoduché kroky k bezpečnému obchodu</div>
+    <!-- 4 KROKY -->
+    <div style="margin-bottom:64px">
+      <div style="font-family:var(--mono);font-size:10px;color:var(--orange);text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px">Jak to funguje</div>
+      <h2 style="font-size:clamp(22px,3.5vw,36px);font-weight:700;letter-spacing:-.02em;margin:0 0 32px">4 jednoduché kroky k bezpečnému obchodu</h2>
       <div class="how-grid">
         <div class="how-card"><div class="how-n">01 —</div><div class="how-icon">🔍</div><div class="how-t">Vyber si svůj úlovek</div><div class="how-d">Procházej ověřené profily. Filtruj podle sítě (IG, TikTok, FB, YT), zaměření, počtu sledujících nebo ceny. Vše, co vidíš, už prošlo naší předběžnou kontrolou.</div></div>
         <div class="how-card"><div class="how-n">02 —</div><div class="how-icon">💳</div><div class="how-t">Bezpečná platba do úschovy</div><div class="how-d">Jakmile klikneš na koupit, peníze neposíláš prodejci, ale na chráněný účet UlovProfil. V tu chvíli prodejce ví, že to myslíš vážně, a my peníze bezpečně zmrazíme.</div></div>
-        <div class="how-card"><div class="how-n">03 —</div><div class="how-icon">🔑</div><div class="how-t">Převzetí a kontrola</div><div class="how-d">Prodejce ti skrze náš systém předá přihlašovací údaje. Máš 48 hodin na to, aby sis účet zabezpečil (změnil e-mail, heslo, dvoufázové ověření) a zkontroloval, zda vše sedí podle popisu.</div></div>
+        <div class="how-card"><div class="how-n">03 —</div><div class="how-icon">🔑</div><div class="how-t">Převzetí a kontrola</div><div class="how-d">Prodejce ti skrze náš systém předá přihlašovací údaje. Máš 48 hodin na to, aby sis účet zabezpečil a zkontroloval, zda vše sedí podle popisu.</div></div>
         <div class="how-card"><div class="how-n">04 —</div><div class="how-icon">✅</div><div class="how-t">Potvrzení a výplata</div><div class="how-d">Jakmile v systému klikneš, že je všechno v pořádku a účet je kompletně tvůj, uvolníme peníze z úschovy prodejci. Obchod je uzavřen, obě strany jsou spokojené a bez rizika.</div></div>
       </div>
-      <div style="margin-top:32px;padding-top:24px;border-top:1px solid var(--border);display:flex;gap:20px;flex-wrap:wrap">
-        <a onclick="go('vop')" style="font-family:var(--mono);font-size:11px;color:var(--g2);cursor:pointer;transition:color .15s" onmouseover="this.style.color='var(--orange)'" onmouseout="this.style.color='var(--g2)'">Obchodní podmínky</a>
-        <a onclick="go('vop')" style="font-family:var(--mono);font-size:11px;color:var(--g2);cursor:pointer;transition:color .15s" onmouseover="this.style.color='var(--orange)'" onmouseout="this.style.color='var(--g2)'">Ochrana soukromí</a>
-        <a href="mailto:info@ulovprofil.cz" style="font-family:var(--mono);font-size:11px;color:var(--g2);text-decoration:none;display:inline-flex;align-items:center;gap:5px;transition:color .15s" onmouseover="this.style.color='var(--orange)'" onmouseout="this.style.color='var(--g2)'">💬 Podpora: info@ulovprofil.cz</a>
-        <span style="font-family:var(--mono);font-size:11px;color:var(--g2)">© 2026 UlovProfil</span>
-        <span style="font-family:var(--mono);font-size:11px;color:var(--g2)">IČO: 10841067</span>
-        <a href="https://audeflow.cz" target="_blank" style="font-family:var(--mono);font-size:11px;color:var(--g2);text-decoration:none;margin-left:auto;transition:color .15s" onmouseover="this.style.color='var(--white)'" onmouseout="this.style.color='var(--g2)'">Created by <strong style="color:var(--white)">AUDEFLOW</strong></a>
-      </div>
-
-      <!-- SEO: Keyword-rich footer obsah pro crawlery -->
-      <div style="margin-top:40px;padding-top:28px;border-top:1px solid var(--border)">
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:24px">
-          <div>
-            <div style="font-family:var(--mono);font-size:10px;color:var(--g2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px">Prodej účtů</div>
-            <div style="display:flex;flex-direction:column;gap:5px">
-              <a onclick="setF('TikTok',document.querySelector('.fchip'))" style="font-size:12px;color:var(--g2);cursor:pointer" onmouseover="this.style.color='var(--orange)'" onmouseout="this.style.color='var(--g2)'">Prodat TikTok účet</a>
-              <a onclick="setF('Instagram',document.querySelector('.fchip'))" style="font-size:12px;color:var(--g2);cursor:pointer" onmouseover="this.style.color='var(--orange)'" onmouseout="this.style.color='var(--g2)'">Prodat Instagram profil</a>
-              <a onclick="setF('YouTube',document.querySelector('.fchip'))" style="font-size:12px;color:var(--g2);cursor:pointer" onmouseover="this.style.color='var(--orange)'" onmouseout="this.style.color='var(--g2)'">Prodat YouTube kanál</a>
-              <a onclick="setF('Facebook',document.querySelector('.fchip'))" style="font-size:12px;color:var(--g2);cursor:pointer" onmouseover="this.style.color='var(--orange)'" onmouseout="this.style.color='var(--g2)'">Prodat Facebook stránku</a>
-              <a onclick="setF('LinkedIn',document.querySelector('.fchip'))" style="font-size:12px;color:var(--g2);cursor:pointer" onmouseover="this.style.color='var(--orange)'" onmouseout="this.style.color='var(--g2)'">Prodat LinkedIn profil</a>
-            </div>
-          </div>
-          <div>
-            <div style="font-family:var(--mono);font-size:10px;color:var(--g2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px">Koupit účty</div>
-            <div style="display:flex;flex-direction:column;gap:5px">
-              <a onclick="scrollListings()" style="font-size:12px;color:var(--g2);cursor:pointer" onmouseover="this.style.color='var(--orange)'" onmouseout="this.style.color='var(--g2)'">Koupit TikTok účet CZ/SK</a>
-              <a onclick="scrollListings()" style="font-size:12px;color:var(--g2);cursor:pointer" onmouseover="this.style.color='var(--orange)'" onmouseout="this.style.color='var(--g2)'">Koupit Instagram s followery</a>
-              <a onclick="scrollListings()" style="font-size:12px;color:var(--g2);cursor:pointer" onmouseover="this.style.color='var(--orange)'" onmouseout="this.style.color='var(--g2)'">Koupit monetizovaný YouTube</a>
-              <a onclick="scrollListings()" style="font-size:12px;color:var(--g2);cursor:pointer" onmouseover="this.style.color='var(--orange)'" onmouseout="this.style.color='var(--g2)'">Koupit Discord server</a>
-              <a onclick="scrollListings()" style="font-size:12px;color:var(--g2);cursor:pointer" onmouseover="this.style.color='var(--orange)'" onmouseout="this.style.color='var(--g2)'">Koupit Telegram kanál</a>
-            </div>
-          </div>
-          <div>
-            <div style="font-family:var(--mono);font-size:10px;color:var(--g2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px">O platformě</div>
-            <div style="display:flex;flex-direction:column;gap:5px">
-              <a onclick="scrollHow()" style="font-size:12px;color:var(--g2);cursor:pointer" onmouseover="this.style.color='var(--orange)'" onmouseout="this.style.color='var(--g2)'">Jak funguje garantovaný převod</a>
-              <a onclick="go('vop')" style="font-size:12px;color:var(--g2);cursor:pointer" onmouseover="this.style.color='var(--orange)'" onmouseout="this.style.color='var(--g2)'">Obchodní podmínky</a>
-              <a onclick="go('auth')" style="font-size:12px;color:var(--g2);cursor:pointer" onmouseover="this.style.color='var(--orange)'" onmouseout="this.style.color='var(--g2)'">Registrace zdarma</a>
-              <span style="font-size:12px;color:var(--g2)">info@ulovprofil.cz</span>
-              <span style="font-size:12px;color:var(--g2)">Praha, Česká republika</span>
-            </div>
-          </div>
-        </div>
-        <div style="margin-top:24px;padding-top:16px;border-top:1px solid var(--border);font-size:11px;color:var(--g2);line-height:1.7">
-          UlovProfil je první a jediný český a slovenský online marketplace pro bezpečný prodej a nákup účtů sociálních sítí. Specializujeme se na prodej TikTok účtů, Instagram profilů, YouTube kanálů, Facebook stránek, LinkedIn profilů, Snapchat účtů, Discord serverů, Telegram kanálů, Pinterest účtů a Twitch kanálů. Každá transakce je garantována Provozovatelem vlastním jménem — platba v CZK, podpora v češtině, arbitráž sporů do 48 hodin.
-        </div>
-      </div>
-
     </div>
+
+    <!-- FOOTER LINKS -->
+    <div style="padding-top:24px;border-top:1px solid var(--border);display:flex;gap:20px;flex-wrap:wrap;align-items:center">
+      <a onclick="go('vop')" style="font-family:var(--mono);font-size:11px;color:var(--g2);cursor:pointer;transition:color .15s" onmouseover="this.style.color='var(--orange)'" onmouseout="this.style.color='var(--g2)'">Obchodní podmínky</a>
+      <a onclick="go('vop')" style="font-family:var(--mono);font-size:11px;color:var(--g2);cursor:pointer;transition:color .15s" onmouseover="this.style.color='var(--orange)'" onmouseout="this.style.color='var(--g2)'">Ochrana soukromí</a>
+      <a href="mailto:info@ulovprofil.cz" style="font-family:var(--mono);font-size:11px;color:var(--g2);text-decoration:none;display:inline-flex;align-items:center;gap:5px;transition:color .15s" onmouseover="this.style.color='var(--orange)'" onmouseout="this.style.color='var(--g2)'">💬 info@ulovprofil.cz</a>
+      <span style="font-family:var(--mono);font-size:11px;color:var(--g2)">© 2026 UlovProfil</span>
+      <span style="font-family:var(--mono);font-size:11px;color:var(--g2)">IČO: 10841067</span>
+      <a href="https://audeflow.cz" target="_blank" style="font-family:var(--mono);font-size:11px;color:var(--g2);text-decoration:none;margin-left:auto;transition:color .15s" onmouseover="this.style.color='var(--white)'" onmouseout="this.style.color='var(--g2)'">Created by <strong style="color:var(--white)">AUDEFLOW</strong></a>
+    </div>
+
+    <!-- SEO footer -->
+    <div style="margin-top:40px;padding-top:28px;border-top:1px solid var(--border)">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:24px">
+        <div>
+          <div style="font-family:var(--mono);font-size:10px;color:var(--g2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px">Prodej účtů</div>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <a onclick="setF('TikTok',document.querySelector('.fchip'))" style="font-size:12px;color:var(--g2);cursor:pointer" onmouseover="this.style.color='var(--orange)'" onmouseout="this.style.color='var(--g2)'">Prodat TikTok účet</a>
+            <a onclick="setF('Instagram',document.querySelector('.fchip'))" style="font-size:12px;color:var(--g2);cursor:pointer" onmouseover="this.style.color='var(--orange)'" onmouseout="this.style.color='var(--g2)'">Prodat Instagram profil</a>
+            <a onclick="setF('YouTube',document.querySelector('.fchip'))" style="font-size:12px;color:var(--g2);cursor:pointer" onmouseover="this.style.color='var(--orange)'" onmouseout="this.style.color='var(--g2)'">Prodat YouTube kanál</a>
+            <a onclick="setF('Facebook',document.querySelector('.fchip'))" style="font-size:12px;color:var(--g2);cursor:pointer" onmouseover="this.style.color='var(--orange)'" onmouseout="this.style.color='var(--g2)'">Prodat Facebook stránku</a>
+            <a onclick="setF('LinkedIn',document.querySelector('.fchip'))" style="font-size:12px;color:var(--g2);cursor:pointer" onmouseover="this.style.color='var(--orange)'" onmouseout="this.style.color='var(--g2)'">Prodat LinkedIn profil</a>
+          </div>
+        </div>
+        <div>
+          <div style="font-family:var(--mono);font-size:10px;color:var(--g2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px">Koupit účty</div>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <a onclick="scrollListings()" style="font-size:12px;color:var(--g2);cursor:pointer" onmouseover="this.style.color='var(--orange)'" onmouseout="this.style.color='var(--g2)'">Koupit TikTok účet CZ/SK</a>
+            <a onclick="scrollListings()" style="font-size:12px;color:var(--g2);cursor:pointer" onmouseover="this.style.color='var(--orange)'" onmouseout="this.style.color='var(--g2)'">Koupit Instagram s followery</a>
+            <a onclick="scrollListings()" style="font-size:12px;color:var(--g2);cursor:pointer" onmouseover="this.style.color='var(--orange)'" onmouseout="this.style.color='var(--g2)'">Koupit monetizovaný YouTube</a>
+            <a onclick="scrollListings()" style="font-size:12px;color:var(--g2);cursor:pointer" onmouseover="this.style.color='var(--orange)'" onmouseout="this.style.color='var(--g2)'">Koupit Discord server</a>
+            <a onclick="scrollListings()" style="font-size:12px;color:var(--g2);cursor:pointer" onmouseover="this.style.color='var(--orange)'" onmouseout="this.style.color='var(--g2)'">Koupit Telegram kanál</a>
+          </div>
+        </div>
+        <div>
+          <div style="font-family:var(--mono);font-size:10px;color:var(--g2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px">O platformě</div>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <a onclick="scrollHow()" style="font-size:12px;color:var(--g2);cursor:pointer" onmouseover="this.style.color='var(--orange)'" onmouseout="this.style.color='var(--g2)'">Jak funguje garantovaný převod</a>
+            <a onclick="go('vop')" style="font-size:12px;color:var(--g2);cursor:pointer" onmouseover="this.style.color='var(--orange)'" onmouseout="this.style.color='var(--g2)'">Obchodní podmínky</a>
+            <a onclick="go('auth')" style="font-size:12px;color:var(--g2);cursor:pointer" onmouseover="this.style.color='var(--orange)'" onmouseout="this.style.color='var(--g2)'">Registrace zdarma</a>
+            <span style="font-size:12px;color:var(--g2)">info@ulovprofil.cz</span>
+            <span style="font-size:12px;color:var(--g2)">Praha, Česká republika</span>
+          </div>
+        </div>
+      </div>
+      <div style="margin-top:24px;padding-top:16px;border-top:1px solid var(--border);font-size:11px;color:var(--g2);line-height:1.7">
+        UlovProfil je první a jediný český a slovenský online marketplace pro bezpečný prodej a nákup účtů sociálních sítí. Specializujeme se na prodej TikTok účtů, Instagram profilů, YouTube kanálů, Facebook stránek, LinkedIn profilů, Snapchat účtů, Discord serverů, Telegram kanálů, Pinterest účtů a Twitch kanálů. Každá transakce je garantována Provozovatelem vlastním jménem — platba v CZK, podpora v češtině, arbitráž sporů do 48 hodin.
+      </div>
+    </div>
+
   </div>
-  <div style="height:60px"></div>
 </div>
 <div class="page h" id="page-auth">
   <div class="awrap">
