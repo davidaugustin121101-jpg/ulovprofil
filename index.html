@@ -5724,10 +5724,13 @@ async function admCancelReservation(listingId){
   if(!listingId){toast('Chybí ID inzerátu','error');return;}
   if(!confirm('Zrušit rezervaci a vrátit inzerát zpět do prodeje?'))return;
   const{error}=await sb.from('listings').update({status:'active',reserved_order_id:null}).eq('id',listingId);
-  if(error){toast('Chyba: '+error.message,'error');return;}
-  // Smaž záznam z admin_notifications (zmizí z Objednávek)
-  await sb.from('admin_notifications').delete().eq('listing_id',listingId).eq('type','new_order');
-  // Zruš také orders záznam
+  if(error){toast('Chyba (listing): '+error.message,'error');return;}
+  // UPDATE místo DELETE — RLS nemá DELETE policy pro admina
+  const{error:ne}=await sb.from('admin_notifications')
+    .update({type:'order_cancelled'})
+    .eq('listing_id',listingId)
+    .eq('type','new_order');
+  if(ne) console.warn('admCancelReservation notify update error:',ne.message);
   await sb.from('orders').update({status:'CANCELLED',cancelled_at:new Date().toISOString()}).eq('listing_id',listingId).neq('status','COMPLETED');
   toast('Rezervace zrušena — inzerát je zpět v prodeji ✅','success');
   loadAdmin();loadPub();loadAdminOrders();
