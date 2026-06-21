@@ -2131,15 +2131,6 @@ pre{white-space:pre-wrap;word-break:break-word}
               <div style="font-family:var(--mono);font-size:10px;color:var(--g2)">Identita chráněna · Sdílena pouze při dokončení transakce</div>
             </div>
           </div>
-          <div id="ld-seller-rating-inline" style="font-family:var(--mono);font-size:11px;color:var(--amber);margin-top:10px"></div>
-        </div>
-        <!-- Hodnocení prodejce -->
-        <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--r3);padding:24px">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-            <div style="font-family:var(--mono);font-size:10px;color:var(--g2);text-transform:uppercase;letter-spacing:.08em">Hodnocení prodejce</div>
-            <div id="ld-seller-rating"></div>
-          </div>
-          <div id="ld-reviews-list"><div style="font-family:var(--mono);font-size:11px;color:var(--g2)">Načítám hodnocení...</div></div>
         </div>
       </div>
       <!-- RIGHT: sticky buy card -->
@@ -6138,7 +6129,6 @@ function openListingDetail(listing){
   }
 
   go('listing');
-  loadReviewsForSeller(listing.seller_email,'ld-reviews-list','ld-seller-rating');
 }
 
 function ldGallSlide(i){
@@ -8074,54 +8064,136 @@ async function loadAdminUsers(){
 
 <!-- EDIT LISTING MODAL -->
 <div id="mo-edit-listing" class="mo h">
-  <div class="md" style="max-width:640px;max-height:90vh;overflow-y:auto">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
-      <div style="font-size:17px;font-weight:700">✏️ Upravit inzerát</div>
-      <button onclick="closeMo('mo-edit-listing')" style="background:none;border:none;color:var(--g2);font-size:20px;cursor:pointer;line-height:1">✕</button>
+  <div class="md" style="max-width:680px;padding:0;overflow:hidden">
+
+    <!-- PROGRESS BAR -->
+    <div style="height:3px;background:var(--border)">
+      <div id="edit-progress" style="height:100%;background:var(--orange);transition:width .3s;width:50%"></div>
     </div>
-    <input type="hidden" id="edit-listing-id">
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-      <div class="fg" style="margin:0">
-        <label class="fl">Followerů / sledujících</label>
-        <input type="text" class="fi" id="edit-followers" placeholder="např. 25 000">
+
+    <!-- TABS -->
+    <div style="display:flex;border-bottom:1px solid var(--border)">
+      <div class="add-tab on" id="edit-tab-1" onclick="editSwitchTab(1)" style="flex:1;padding:14px;text-align:center;font-size:12px;font-weight:600;cursor:pointer;border-bottom:2px solid var(--orange);color:var(--orange);font-family:var(--sans)">1. Základní info</div>
+      <div class="add-tab" id="edit-tab-2" onclick="editSwitchTab(2)" style="flex:1;padding:14px;text-align:center;font-size:12px;font-weight:500;cursor:pointer;border-bottom:2px solid transparent;color:var(--g2);font-family:var(--sans)">2. Fotky</div>
+      <button onclick="closeMo('mo-edit-listing')" style="padding:14px 18px;border:none;background:none;color:var(--g2);cursor:pointer;font-size:20px">×</button>
+    </div>
+
+    <!-- STEP 1: ZÁKLADNÍ INFO -->
+    <div id="edit-step-1" style="padding:24px;max-height:70vh;overflow-y:auto">
+      <input type="hidden" id="edit-listing-id">
+
+      <!-- PLATFORMA (jen zobrazení, nelze měnit) -->
+      <div class="ws">
+        <div class="wlbl">Platforma</div>
+        <div id="ed-plat-badge" style="display:inline-flex;align-items:center;gap:8px;padding:8px 14px;background:var(--odim);border:1px solid var(--obrd);border-radius:20px;font-size:13px;font-weight:600;color:var(--orange)"></div>
+        <input type="hidden" id="ed-a-plat">
       </div>
-      <div class="fg" style="margin:0">
-        <label class="fl">Cena (Kč)</label>
-        <input type="number" class="fi" id="edit-price" placeholder="např. 8000">
+
+      <!-- FOLLOWEŘI -->
+      <div class="ws" id="ed-ws-fol">
+        <div class="wlbl"><span id="ed-lbl-fol">Počet followerů</span> <span class="wr">*</span><span class="wv" id="ed-val-fol">—</span></div>
+        <div class="wbig" id="ed-big-fol" style="color:var(--orange)">—</div>
+        <input type="range" class="wslider" id="ed-fol-range" min="0" max="30" step="1" value="5">
+        <div class="wticks"><span>500</span><span>1K</span><span>5K</span><span>25K</span><span>100K</span><span>500K</span><span>1M+</span></div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:10px">
+          <label style="font-family:var(--mono);font-size:10px;color:var(--g2);white-space:nowrap;text-transform:uppercase;letter-spacing:.06em">Nebo zadej přesně:</label>
+          <input type="number" id="ed-fol-manual" min="0" placeholder="např. 14 500" style="flex:1;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r2);padding:7px 10px;font-family:var(--mono);font-size:13px;color:var(--white);outline:none;transition:border-color var(--tr)" onfocus="this.style.borderColor='var(--orange)'" onblur="this.style.borderColor='var(--border2)'" oninput="edOnFolManual(this.value)">
+        </div>
+        <input type="hidden" id="ed-a-fol">
       </div>
-      <div class="fg" style="margin:0">
-        <label class="fl">Niche / zaměření</label>
-        <input type="text" class="fi" id="edit-niche" placeholder="např. Fitness & Health">
+
+      <!-- ENGAGEMENT -->
+      <div class="ws" id="ed-ws-eng" style="display:none">
+        <div class="wlbl"><span id="ed-lbl-eng">Engagement</span> <span class="wr">*</span><span class="wv" id="ed-val-eng">—</span></div>
+        <div class="wchips" id="ed-chips-eng"></div>
+        <div id="ed-eng-hint" style="font-size:10px;color:var(--g2);margin-top:6px;line-height:1.5"></div>
+        <input type="hidden" id="ed-a-eng">
       </div>
-      <div class="fg" style="margin:0">
-        <label class="fl">Engagement rate</label>
-        <input type="text" class="fi" id="edit-engagement" placeholder="např. 4.2%">
+
+      <!-- EXTRA1 -->
+      <div class="ws" id="ed-ws-ex1" style="display:none">
+        <div class="wlbl"><span id="ed-lbl-ex1">Extra parametr</span><span class="wv" id="ed-val-ex1">—</span></div>
+        <div class="wchips" id="ed-chips-ex1"></div>
+        <input type="hidden" id="ed-a-ex1">
       </div>
-      <div class="fg" style="margin:0">
-        <label class="fl">Publikum</label>
-        <input type="text" class="fi" id="edit-audience" placeholder="např. 18–24 CZ/SK">
+
+      <!-- EXTRA2 -->
+      <div class="ws" id="ed-ws-ex2" style="display:none">
+        <div class="wlbl"><span id="ed-lbl-ex2">Extra parametr 2</span><span class="wv" id="ed-val-ex2">—</span></div>
+        <div class="wchips" id="ed-chips-ex2"></div>
+        <input type="hidden" id="ed-a-ex2">
       </div>
-      <div class="fg" style="margin:0">
-        <label class="fl">Stáří účtu</label>
-        <input type="text" class="fi" id="edit-account-age" placeholder="např. 3 roky">
+
+      <!-- NICHE -->
+      <div class="ws" id="ed-ws-nic" style="display:none">
+        <div class="wlbl"><span id="ed-lbl-nic">Niche / Téma</span> <span class="wr">*</span><span class="wv" id="ed-val-nic">—</span></div>
+        <div class="wchips" id="ed-chips-nic"></div>
+        <input type="hidden" id="ed-a-nic">
+      </div>
+
+      <!-- PUBLIKUM -->
+      <div class="ws" id="ed-ws-aud" style="display:none">
+        <div class="wlbl"><span id="ed-lbl-aud">Publikum / Region</span><span class="wv" id="ed-val-aud">—</span></div>
+        <div class="wchips" id="ed-chips-aud"></div>
+        <input type="hidden" id="ed-a-aud">
+      </div>
+
+      <!-- STÁŘÍ -->
+      <div class="ws" id="ed-ws-age" style="display:none">
+        <div class="wlbl">Stáří účtu<span class="wv" id="ed-val-age">—</span></div>
+        <div class="wchips" id="ed-chips-age"></div>
+        <input type="hidden" id="ed-a-age">
+      </div>
+
+      <!-- CENA -->
+      <div class="ws" id="ed-ws-price" style="display:none">
+        <div class="wlbl">Požadovaná cena <span class="wr">*</span><span class="wv" id="ed-val-price">—</span></div>
+        <div class="wbig" id="ed-big-price" style="color:var(--white)">—</div>
+        <input type="range" class="wslider" id="ed-price-range" min="0" max="59" step="1" value="10">
+        <div class="wticks"><span>500 Kč</span><span>5K</span><span>20K</span><span>100K</span><span>500K</span><span>2M+</span></div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:10px">
+          <label style="font-family:var(--mono);font-size:10px;color:var(--g2);white-space:nowrap;text-transform:uppercase;letter-spacing:.06em">Nebo zadej přesně (Kč):</label>
+          <input type="number" id="ed-price-manual" min="500" placeholder="např. 4 999" style="flex:1;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r2);padding:7px 10px;font-family:var(--mono);font-size:13px;color:var(--white);outline:none;transition:border-color var(--tr)" onfocus="this.style.borderColor='var(--orange)'" onblur="this.style.borderColor='var(--border2)'" oninput="edOnPriceManual(this.value)">
+        </div>
+        <div id="ed-price-break" style="display:none;justify-content:space-between;font-family:var(--mono);font-size:10px;color:var(--g2);margin-top:8px">
+          <span>Kupující zaplatí: <strong id="ed-ptotal" style="color:var(--orange)"></strong> Kč</span>
+          <span>Ty dostaneš: <strong id="ed-pseller" style="color:var(--green)"></strong> Kč</span>
+        </div>
+        <input type="hidden" id="ed-a-price">
+      </div>
+
+      <!-- POPIS -->
+      <div class="ws" id="ed-ws-desc" style="display:none">
+        <div class="wlbl">Popis inzerátu <span class="wr">*</span></div>
+        <textarea class="fta" id="ed-a-desc" style="min-height:100px" placeholder="Popiš účet — co publikuješ, jak dlouho, proč prodáváš..."></textarea>
+        <div style="font-size:11px;color:var(--g2);margin-top:6px">Čím detailnější popis, tím rychleji se prodá.</div>
+      </div>
+
+      <div class="fmsg err h" id="edit-step1-err" style="margin-bottom:10px"></div>
+      <button class="bfull" id="edit-btn-next" onclick="editGoNext()" style="background:var(--orange);display:none">Dále: Fotky →</button>
+    </div>
+
+    <!-- STEP 2: FOTKY -->
+    <div id="edit-step-2" class="h" style="padding:24px;max-height:70vh;overflow-y:auto">
+      <div style="font-size:14px;font-weight:600;color:var(--white);margin-bottom:6px">Fotky inzerátu</div>
+      <div style="font-size:12px;color:var(--g2);margin-bottom:20px;line-height:1.6">Inzeráty s fotkami se prodávají <strong style="color:var(--white)">5× rychleji</strong>. Přidej screenshoty statistik a ukázky obsahu.</div>
+
+      <div id="ed-drop-zone" onclick="document.getElementById('ed-file-input').click()" style="border:2px dashed var(--border2);border-radius:var(--r3);padding:32px;text-align:center;cursor:pointer;transition:border-color .2s;margin-bottom:16px" onmouseover="this.style.borderColor='var(--orange)'" onmouseout="this.style.borderColor='var(--border2)'">
+        <div style="font-size:28px;margin-bottom:8px">📸</div>
+        <div style="font-size:14px;font-weight:600;color:var(--white);margin-bottom:4px">Klikni nebo přetáhni soubory</div>
+        <div style="font-family:var(--mono);font-size:11px;color:var(--g2)">JPG, PNG, WebP · Max 5MB · Max 6 fotek</div>
+        <input type="file" id="ed-file-input" accept="image/*" multiple style="display:none" onchange="editAddPhotos(this)">
+      </div>
+
+      <div id="edit-photos-preview" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:20px"></div>
+
+      <div id="edit-msg" class="fmsg err h" style="margin-bottom:10px"></div>
+      <div style="display:flex;gap:10px">
+        <button onclick="editSwitchTab(1)" style="flex:1;padding:11px;font-size:13px;font-weight:500;border-radius:var(--r2);border:1px solid var(--border2);background:transparent;color:var(--g1);cursor:pointer;font-family:var(--sans)">← Zpět</button>
+        <button class="bfull" onclick="saveEditListing()" id="edit-save-btn" style="flex:2;background:var(--orange);margin-top:0">✓ Uložit změny</button>
       </div>
     </div>
-    <div class="fg" style="margin-top:12px">
-      <label class="fl">Popis inzerátu</label>
-      <textarea class="fi" id="edit-description" rows="3" style="resize:vertical" placeholder="Popiš co inzerát nabízí..."></textarea>
-    </div>
-    <!-- Současné fotky -->
-    <div class="fg" style="margin-top:12px">
-      <label class="fl">Fotky inzerátu</label>
-      <div id="edit-photos-preview" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px"></div>
-      <input type="file" id="edit-photo-input" accept="image/*" multiple style="display:none" onchange="editAddPhotos(this)">
-      <button onclick="document.getElementById('edit-photo-input').click()" style="background:var(--bg3);border:1px dashed var(--border2);border-radius:8px;padding:10px 18px;font-size:12px;color:var(--g1);cursor:pointer;width:100%;font-family:var(--sans)">+ Přidat / změnit fotky</button>
-    </div>
-    <div id="edit-msg" class="h" style="margin-top:10px;font-size:13px;color:var(--red)"></div>
-    <div style="display:flex;gap:10px;margin-top:18px">
-      <button class="bo" onclick="saveEditListing()" id="edit-save-btn" style="flex:1">Uložit změny</button>
-      <button onclick="closeMo('mo-edit-listing')" style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 20px;font-size:13px;color:var(--g1);cursor:pointer;font-family:var(--sans)">Zrušit</button>
-    </div>
+
   </div>
 </div>
 
@@ -8160,38 +8232,273 @@ document.addEventListener('keydown',e=>{
   }
 });
 
-// ── EDIT LISTING ──
+// ── EDIT LISTING WIZARD ──
 let _editPhotos=[];
+
+function editSwitchTab(n){
+  [1,2].forEach(i=>{
+    const step=document.getElementById('edit-step-'+i);
+    const tab=document.getElementById('edit-tab-'+i);
+    if(!step||!tab) return;
+    const on=i===n;
+    step.classList.toggle('h',!on);
+    tab.style.borderBottom=on?'2px solid var(--orange)':'2px solid transparent';
+    tab.style.color=on?'var(--orange)':'var(--g2)';
+    tab.style.fontWeight=on?'600':'500';
+  });
+  const prog=document.getElementById('edit-progress');
+  if(prog) prog.style.width=(n===1?'50%':'100%');
+}
+
+function edShow(sectionId){
+  const el=document.getElementById(sectionId);
+  if(el){el.style.display='block';el.style.animation='fadeInUp .2s ease';}
+}
+
+function edOnFolManual(raw){
+  const v=parseInt(raw)||0; if(v<=0) return;
+  const t=wFmt(v);
+  document.getElementById('ed-big-fol').textContent=t;
+  document.getElementById('ed-val-fol').textContent=t;
+  document.getElementById('ed-a-fol').value=v;
+  // show next section
+  const plat=document.getElementById('ed-a-plat').value;
+  const cfg=PLAT_CFG[plat]||{};
+  if(cfg.engChips?.length) edShow('ed-ws-eng');
+  else edShow('ed-ws-nic');
+  document.getElementById('edit-btn-next').style.display='block';
+}
+
+function edOnPriceManual(raw){
+  const v=parseInt(raw)||0; if(v<=0) return;
+  const t=fp(v);
+  document.getElementById('ed-big-price').textContent=t+' Kč';
+  document.getElementById('ed-val-price').textContent=t+' Kč';
+  document.getElementById('ed-a-price').value=v;
+  const pb=document.getElementById('ed-price-break');
+  if(pb){
+    pb.style.display='flex';
+    const tot=Math.round(v*1.15);
+    const sel=Math.round(v*0.85);
+    document.getElementById('ed-ptotal').textContent=fp(tot);
+    document.getElementById('ed-pseller').textContent=fp(sel);
+  }
+  edShow('ed-ws-desc');
+  document.getElementById('edit-btn-next').style.display='block';
+}
+
+function editGoNext(){
+  const fol=document.getElementById('ed-a-fol').value;
+  const nic=document.getElementById('ed-a-nic').value;
+  const price=document.getElementById('ed-a-price').value;
+  const desc=document.getElementById('ed-a-desc').value.trim();
+  const err=document.getElementById('edit-step1-err');
+  if(!fol){err.textContent='Nastav počet followerů';err.classList.remove('h');return;}
+  if(!price){err.textContent='Nastav cenu';err.classList.remove('h');return;}
+  if(!desc){err.textContent='Napiš popis inzerátu';err.classList.remove('h');return;}
+  err.classList.add('h');
+  editSwitchTab(2);
+}
+
 function openEditListing(listing){
-  if(!listing)return;
+  if(!listing) return;
   document.getElementById('edit-listing-id').value=listing.id;
-  document.getElementById('edit-followers').value=listing.followers||'';
-  document.getElementById('edit-price').value=listing.price||'';
-  document.getElementById('edit-niche').value=listing.niche||'';
-  document.getElementById('edit-engagement').value=listing.engagement||'';
-  document.getElementById('edit-audience').value=listing.audience||'';
-  document.getElementById('edit-account-age').value=listing.account_age||'';
-  document.getElementById('edit-description').value=listing.description||'';
+  const plat=listing.platform||'';
+  document.getElementById('ed-a-plat').value=plat;
+
+  // Platform badge
+  const badge=document.getElementById('ed-plat-badge');
+  if(badge){
+    const cfg=PLAT_CFG[plat]||{};
+    badge.innerHTML=cfg.logo?`<img src="${cfg.logo}" style="width:22px;height:22px;object-fit:contain;border-radius:4px">`:'';
+    badge.innerHTML+=`<span>${esc(plat)}</span>`;
+  }
+
+  // Setup chips for this platform
+  const cfg=PLAT_CFG[plat]||{};
+  const lf=document.getElementById('ed-lbl-fol'); if(lf) lf.textContent=(cfg.folLabel||'Počet followerů').replace(' *','');
+  const le=document.getElementById('ed-lbl-eng'); if(le) le.textContent=cfg.engLabel||'Engagement';
+  const lnic=document.getElementById('ed-lbl-nic'); if(lnic) lnic.textContent=(cfg.nicLabel||'Niche / Téma').replace(' *','');
+  const laud=document.getElementById('ed-lbl-aud'); if(laud) laud.textContent=cfg.audLabel||'Publikum / Region';
+  const eh=document.getElementById('ed-eng-hint'); if(eh) eh.textContent=cfg.engHint||'';
+
+  // Render chips
+  function edRenderChips(cid, chips, grp){
+    const el=document.getElementById(cid);
+    if(!el) return;
+    el.innerHTML=(chips||[]).map(c=>`<div class="wc" data-edwg="${grp}" data-v="${c.v}">${c.e}</div>`).join('');
+  }
+  edRenderChips('ed-chips-eng', cfg.engChips, 'eng');
+  edRenderChips('ed-chips-nic', cfg.nicChips, 'nic');
+  edRenderChips('ed-chips-aud', cfg.audChips, 'aud');
+  edRenderChips('ed-chips-age', cfg.ageChips, 'age');
+  if(cfg.extra1Label&&cfg.extra1Chips?.length){
+    edRenderChips('ed-chips-ex1', cfg.extra1Chips, 'ex1');
+    const lx=document.getElementById('ed-lbl-ex1'); if(lx) lx.textContent=cfg.extra1Label;
+  }
+  if(cfg.extra2Label&&cfg.extra2Chips?.length){
+    edRenderChips('ed-chips-ex2', cfg.extra2Chips, 'ex2');
+    const lx=document.getElementById('ed-lbl-ex2'); if(lx) lx.textContent=cfg.extra2Label;
+  }
+
+  // Pre-select chips from existing data
+  function edPreselect(cid, val){
+    if(!val) return;
+    document.querySelectorAll(`#${cid} .wc`).forEach(c=>{
+      if(c.dataset.v===val||c.dataset.v===String(val)) c.classList.add('on');
+    });
+  }
+  edPreselect('ed-chips-eng', listing.engagement);
+  edPreselect('ed-chips-nic', listing.niche);
+  edPreselect('ed-chips-aud', listing.audience);
+  edPreselect('ed-chips-age', listing.account_age);
+
+  // Pre-fill hidden fields from listing
+  const setV=(id,v)=>{const el=document.getElementById(id);if(el&&v!=null)el.value=v;};
+  setV('ed-a-fol', listing.followers||'');
+  setV('ed-a-eng', listing.engagement||'');
+  setV('ed-a-nic', listing.niche||'');
+  setV('ed-a-aud', listing.audience||'');
+  setV('ed-a-age', listing.account_age||'');
+  setV('ed-a-price', listing.price||'');
+  setV('ed-a-desc', '');
+  const desc=document.getElementById('ed-a-desc'); if(desc) desc.value=listing.description||'';
+
+  // Pre-fill followers display
+  const folVal=listing.followers;
+  if(folVal){
+    const ft=wFmt(parseInt(String(folVal).replace(/\D/g,''))||0)||String(folVal);
+    const bf=document.getElementById('ed-big-fol'); if(bf) bf.textContent=ft;
+    const vf=document.getElementById('ed-val-fol'); if(vf) vf.textContent=ft;
+    const fm=document.getElementById('ed-fol-manual'); if(fm) fm.value=String(folVal).replace(/\D/g,'');
+  }
+
+  // Pre-fill price display
+  const priceVal=parseInt(listing.price)||0;
+  if(priceVal){
+    const pt=fp(priceVal);
+    const bp=document.getElementById('ed-big-price'); if(bp) bp.textContent=pt+' Kč';
+    const vp=document.getElementById('ed-val-price'); if(vp) vp.textContent=pt+' Kč';
+    const pm=document.getElementById('ed-price-manual'); if(pm) pm.value=priceVal;
+    const pb=document.getElementById('ed-price-break');
+    if(pb){
+      pb.style.display='flex';
+      document.getElementById('ed-ptotal').textContent=fp(Math.round(priceVal*1.15));
+      document.getElementById('ed-pseller').textContent=fp(Math.round(priceVal*0.85));
+    }
+  }
+
+  // Show all sections (pre-filled edit shows everything at once)
+  ['ed-ws-fol','ed-ws-eng','ed-ws-nic','ed-ws-aud','ed-ws-age','ed-ws-price','ed-ws-desc'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.style.display='block';
+  });
+  // Show ex1/ex2 only if platform has them
+  const ex1sec=document.getElementById('ed-ws-ex1');
+  const ex2sec=document.getElementById('ed-ws-ex2');
+  if(ex1sec) ex1sec.style.display=(cfg.extra1Label&&cfg.extra1Chips?.length)?'block':'none';
+  if(ex2sec) ex2sec.style.display=(cfg.extra2Label&&cfg.extra2Chips?.length)?'block':'none';
+
+  document.getElementById('edit-btn-next').style.display='block';
+  document.getElementById('edit-step1-err').classList.add('h');
+
+  // Photos
   _editPhotos=[...(listing.photos||[])];
   renderEditPhotos();
   document.getElementById('edit-msg').classList.add('h');
+
+  editSwitchTab(1);
   openMo('mo-edit-listing');
+
+  // Range sliders for edit modal
+  const edFolRange=document.getElementById('ed-fol-range');
+  if(edFolRange&&!edFolRange._edBound){
+    edFolRange._edBound=true;
+    edFolRange.oninput=function(){
+      const v=W_FOL[+this.value];
+      const t=typeof v==='string'?v:wFmt(v);
+      document.getElementById('ed-big-fol').textContent=t;
+      document.getElementById('ed-val-fol').textContent=t;
+      document.getElementById('ed-a-fol').value=typeof v==='string'?'5000000+':v;
+      const mi=document.getElementById('ed-fol-manual');if(mi)mi.value=typeof v==='string'?'':v;
+    };
+  }
+  const edPriceRange=document.getElementById('ed-price-range');
+  if(edPriceRange&&!edPriceRange._edBound){
+    edPriceRange._edBound=true;
+    edPriceRange.oninput=function(){
+      const czk=W_PRICE[+this.value];
+      const t=fp(czk);
+      document.getElementById('ed-big-price').textContent=t+' Kč';
+      document.getElementById('ed-val-price').textContent=t+' Kč';
+      document.getElementById('ed-a-price').value=czk;
+      const mi=document.getElementById('ed-price-manual');if(mi)mi.value=czk;
+      const pb=document.getElementById('ed-price-break');
+      if(pb){
+        pb.style.display='flex';
+        document.getElementById('ed-ptotal').textContent=fp(Math.round(czk*1.15));
+        document.getElementById('ed-pseller').textContent=fp(Math.round(czk*0.85));
+      }
+    };
+  }
+
+  // Setup chip click delegation for edit modal (once)
+  if(!document.getElementById('ed-ws-eng')._edBound){
+    ['ed-ws-eng','ed-ws-ex1','ed-ws-ex2','ed-ws-nic','ed-ws-aud','ed-ws-age'].forEach(sid=>{
+      const sec=document.getElementById(sid);
+      if(!sec||sec._edBound) return;
+      sec._edBound=true;
+      sec.addEventListener('click',function(e){
+        const chip=e.target.closest('.wc[data-edwg]');
+        if(!chip) return;
+        const grp=chip.dataset.edwg;
+        const val=chip.dataset.v;
+        sec.querySelectorAll(`.wc[data-edwg="${grp}"]`).forEach(c=>c.classList.remove('on'));
+        chip.classList.add('on');
+        const fMap={eng:'ed-a-eng',ex1:'ed-a-ex1',ex2:'ed-a-ex2',nic:'ed-a-nic',aud:'ed-a-aud',age:'ed-a-age'};
+        const dMap={eng:'ed-val-eng',ex1:'ed-val-ex1',ex2:'ed-val-ex2',nic:'ed-val-nic',aud:'ed-val-aud',age:'ed-val-age'};
+        const fid=fMap[grp]; if(fid){const f=document.getElementById(fid);if(f)f.value=val;}
+        const did=dMap[grp]; if(did){const d=document.getElementById(did);if(d)d.textContent=val;}
+        // show next section
+        const platv=document.getElementById('ed-a-plat').value;
+        const cfgv=PLAT_CFG[platv]||{};
+        const hasEx1=!!(cfgv.extra1Label&&cfgv.extra1Chips?.length);
+        const hasEx2=!!(cfgv.extra2Label&&cfgv.extra2Chips?.length);
+        if(grp==='eng'){
+          if(hasEx1) edShow('ed-ws-ex1');
+        } else if(grp==='ex1'){
+          if(hasEx2) edShow('ed-ws-ex2');
+        } else if(grp==='nic'){
+          edShow('ed-ws-aud');
+        } else if(grp==='aud'){
+          edShow('ed-ws-age');
+        } else if(grp==='age'){
+          edShow('ed-ws-price');
+        }
+      });
+    });
+  }
 }
+
 function renderEditPhotos(){
   const wrap=document.getElementById('edit-photos-preview');
+  if(!wrap) return;
   wrap.innerHTML=_editPhotos.map((src,i)=>`
-    <div style="position:relative;width:80px;height:80px">
-      <img src="${src}" style="width:80px;height:80px;object-fit:cover;border-radius:6px;cursor:pointer" onclick="openPhotoLightbox(_editPhotos,${i})">
-      <button onclick="_editPhotos.splice(${i},1);renderEditPhotos()" style="position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;background:var(--red);border:none;color:#fff;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1">✕</button>
+    <div style="position:relative;aspect-ratio:1;overflow:hidden;border-radius:var(--r2)">
+      <img src="${src}" style="width:100%;height:100%;object-fit:cover;cursor:pointer;border-radius:var(--r2)" onclick="openPhotoLightbox(_editPhotos,${i})">
+      <button onclick="_editPhotos.splice(${i},1);renderEditPhotos()" style="position:absolute;top:4px;right:4px;width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,.7);border:none;color:#fff;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;backdrop-filter:blur(4px)">✕</button>
     </div>`).join('');
 }
+
 async function editAddPhotos(input){
   const files=Array.from(input.files);
+  const btn=document.getElementById('edit-save-btn');
+  if(btn){btn.disabled=true;btn.textContent='Nahrávám...';}
   for(const file of files){
     if(!file.type.startsWith('image/'))continue;
+    if(_editPhotos.length>=6){toast('Max 6 fotek','error');break;}
     const ext=file.name.split('.').pop();
     const path=`listings/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
-    const{data,error}=await sb.storage.from('listing-photos').upload(path,file,{upsert:true});
+    const{error}=await sb.storage.from('listing-photos').upload(path,file,{upsert:true});
     if(!error){
       const{data:u}=sb.storage.from('listing-photos').getPublicUrl(path);
       if(u?.publicUrl) _editPhotos.push(u.publicUrl);
@@ -8199,27 +8506,30 @@ async function editAddPhotos(input){
   }
   renderEditPhotos();
   input.value='';
+  if(btn){btn.disabled=false;btn.textContent='✓ Uložit změny';}
 }
+
 async function saveEditListing(){
   const id=document.getElementById('edit-listing-id').value;
   const btn=document.getElementById('edit-save-btn');
   const msgEl=document.getElementById('edit-msg');
-  if(!id||!user)return;
-  const followers=document.getElementById('edit-followers').value.trim();
-  const price=parseInt(document.getElementById('edit-price').value)||0;
-  if(!followers||!price){showMsg(msgEl,'Vyplň povinná pole');return;}
+  if(!id||!user) return;
+  const followers=document.getElementById('ed-a-fol').value.trim();
+  const price=parseInt(document.getElementById('ed-a-price').value)||0;
+  const desc=document.getElementById('ed-a-desc').value.trim();
+  if(!followers||!price||!desc){showMsg(msgEl,'Vyplň povinná pole (followeři, cena, popis)');return;}
   btn.disabled=true;btn.textContent='Ukládám...';
   const{error}=await sb.from('listings').update({
     followers,
     price,
-    niche:document.getElementById('edit-niche').value.trim(),
-    engagement:document.getElementById('edit-engagement').value.trim(),
-    audience:document.getElementById('edit-audience').value.trim(),
-    account_age:document.getElementById('edit-account-age').value.trim(),
-    description:document.getElementById('edit-description').value.trim(),
-    photos:_editPhotos
+    niche:document.getElementById('ed-a-nic').value.trim()||null,
+    engagement:document.getElementById('ed-a-eng').value.trim()||null,
+    audience:document.getElementById('ed-a-aud').value.trim()||null,
+    account_age:document.getElementById('ed-a-age').value.trim()||null,
+    description:desc,
+    photos:_editPhotos.length>0?_editPhotos:null
   }).eq('id',id).eq('user_id',user.id);
-  btn.disabled=false;btn.textContent='Uložit změny';
+  btn.disabled=false;btn.textContent='✓ Uložit změny';
   if(error){showMsg(msgEl,'Chyba: '+error.message);return;}
   closeMo('mo-edit-listing');
   toast('Inzerát upraven ✅','success');
