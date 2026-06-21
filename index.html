@@ -2757,6 +2757,9 @@ async function init(){
       }
       // SIGNED_IN, INITIAL_SESSION, USER_UPDATED, MFA_CHALLENGE_VERIFIED
       user=s?.user||null;
+      // #region agent log H-D
+      fetch('http://127.0.0.1:7711/ingest/3cd4d8f4-c62c-4feb-9280-e257beb22e7d',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'26f563'},body:JSON.stringify({sessionId:'26f563',location:'onAuthStateChange:SIGNED_IN',message:'event',data:{event,userId:user?.id||null,email:user?.email?.slice(0,4)+'***'||null},timestamp:Date.now(),hypothesisId:'H-D'})}).catch(()=>{});
+      // #endregion
       if(user){
         try{setNavU(user);}catch(e){console.warn('setNavU',e);}
         try{startNotifRealtime(user.id);}catch(e){console.warn('realtime',e);}
@@ -3865,6 +3868,11 @@ function resetPay(){
 // DASHBOARD
 async function loadDash(){
   if(!user)return;
+  // #region agent log H-D/H-E
+  fetch('http://127.0.0.1:7711/ingest/3cd4d8f4-c62c-4feb-9280-e257beb22e7d',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'26f563'},body:JSON.stringify({sessionId:'26f563',location:'loadDash:entry',message:'called',data:{userId:user?.id||null,email:user?.email?.slice(0,4)+'***'||null},timestamp:Date.now(),hypothesisId:'H-D'})}).catch(()=>{});
+  // #endregion
+  // Okamžitě vymaž stará data aby neprobliklo předchozí session
+  document.getElementById('my-grid').innerHTML='<div class="empty"><div class="ei">⏳</div><div class="et">Načítám…</div></div>';
   updateProf();
   try{
     const{data,error}=await sb.from('listings').select('id,user_id,platform,followers,niche,price,engagement,audience,account_age,description,photos,status,created_at,seller_email').eq('user_id',user.id).order('created_at',{ascending:false});
@@ -3907,7 +3915,10 @@ async function loadDash(){
           <div class="dlist-right">
             ${stBadge(l.status)}
             <div class="dlist-price">${fp(l.price)} Kč<small>tvá výplata</small></div>
-            ${l.status!=='reserved'?`<button onclick="delL(${parseInt(l.id)||0})" style="background:var(--rdim);color:var(--red);border:1px solid var(--rbrd);border-radius:7px;font-size:11px;padding:5px 12px;cursor:pointer;font-family:var(--sans)">Smazat</button>`:'<span style="font-family:var(--mono);font-size:10px;color:var(--g2)">Nelze smazat<br>v rezervaci</span>'}
+            <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">
+              <button onclick="openEditListing(${parseInt(l.id)||0})" style="background:var(--bg3);color:var(--g1);border:1px solid var(--border2);border-radius:7px;font-size:11px;padding:5px 12px;cursor:pointer;font-family:var(--sans)" onmouseover="this.style.borderColor='var(--orange)';this.style.color='var(--white)'" onmouseout="this.style.borderColor='var(--border2)';this.style.color='var(--g1)'">✏️ Upravit</button>
+              ${l.status!=='reserved'?`<button onclick="delL(${parseInt(l.id)||0})" style="background:var(--rdim);color:var(--red);border:1px solid var(--rbrd);border-radius:7px;font-size:11px;padding:5px 12px;cursor:pointer;font-family:var(--sans)">Smazat</button>`:'<span style="font-family:var(--mono);font-size:10px;color:var(--g2)">Nelze smazat<br>v rezervaci</span>'}
+            </div>
           </div>
         </div>
       `).join('');
@@ -8606,6 +8617,11 @@ function renderEditPhotos(){
 
 async function editAddPhotos(input){
   const files=Array.from(input.files);
+  // #region agent log H-A/H-B
+  const _dbgEntry={sessionId:'26f563',location:'editAddPhotos:entry',message:'called',data:{filesCount:files.length,fileNames:files.map(f=>f.name),photosBeforeCount:_editPhotos.length},timestamp:Date.now(),hypothesisId:'H-A-B'};
+  fetch('http://127.0.0.1:7711/ingest/3cd4d8f4-c62c-4feb-9280-e257beb22e7d',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'26f563'},body:JSON.stringify(_dbgEntry)}).catch(()=>{});
+  toast(`[DBG] files:${files.length} photos:${_editPhotos.length}`,'success',3000);
+  // #endregion
   const btn=document.getElementById('edit-save-btn');
   if(btn){btn.disabled=true;btn.textContent='Nahrávám...';}
   for(const file of files){
@@ -8614,11 +8630,22 @@ async function editAddPhotos(input){
     const ext=file.name.split('.').pop();
     const path=`listings/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
     const{error}=await sb.storage.from('listing-photos').upload(path,file,{upsert:true});
+    // #region agent log H-A upload result
+    const _dbgUpload={sessionId:'26f563',location:'editAddPhotos:upload',message:'upload result',data:{file:file.name,path,error:error?.message||null,errorCode:error?.statusCode||null},timestamp:Date.now(),hypothesisId:'H-A'};
+    fetch('http://127.0.0.1:7711/ingest/3cd4d8f4-c62c-4feb-9280-e257beb22e7d',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'26f563'},body:JSON.stringify(_dbgUpload)}).catch(()=>{});
+    toast(`[DBG] upload ${error?'ERR:'+error.message:'OK'}`,'success',4000);
+    // #endregion
     if(!error){
       const{data:u}=sb.storage.from('listing-photos').getPublicUrl(path);
       if(u?.publicUrl) _editPhotos.push(u.publicUrl);
     }
   }
+  // #region agent log H-C renderEditPhotos
+  const _wrap=document.getElementById('edit-photos-preview');
+  const _dbgRender={sessionId:'26f563',location:'editAddPhotos:render',message:'before renderEditPhotos',data:{wrapExists:!!_wrap,photosAfterCount:_editPhotos.length},timestamp:Date.now(),hypothesisId:'H-C'};
+  fetch('http://127.0.0.1:7711/ingest/3cd4d8f4-c62c-4feb-9280-e257beb22e7d',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'26f563'},body:JSON.stringify(_dbgRender)}).catch(()=>{});
+  toast(`[DBG] wrap:${!!_wrap} photos:${_editPhotos.length}`,'success',3000);
+  // #endregion
   renderEditPhotos();
   input.value='';
   if(btn){btn.disabled=false;btn.textContent='✓ Uložit změny';}
