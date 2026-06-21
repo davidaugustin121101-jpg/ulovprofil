@@ -203,6 +203,9 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;height:56px;display:flex;ali
 .bo{font-size:13px;font-weight:600;color:#fff;background:var(--orange);border:none;border-radius:var(--r2);padding:7px 15px;transition:background var(--tr)}
 .bo:hover{background:var(--orange2)}
 .nav-av{width:29px;height:29px;border-radius:var(--r2);background:var(--odim);border:1px solid var(--obrd);display:grid;place-items:center;font-family:var(--mono);font-size:11px;color:var(--orange);cursor:pointer}
+.nav-bell{position:relative;width:32px;height:32px;border-radius:var(--r2);background:none;border:1px solid var(--border);display:grid;place-items:center;font-size:15px;cursor:pointer;transition:all .15s;color:var(--g1)}
+.nav-bell:hover{border-color:var(--border3);color:var(--white);background:var(--bg3)}
+.nav-bell-badge{position:absolute;top:-5px;right:-5px;background:var(--red);color:#fff;font-family:var(--mono);font-size:9px;font-weight:700;padding:1px 5px;border-radius:10px;min-width:16px;text-align:center;line-height:16px;border:2px solid var(--bg)}
 .nav-em{font-size:12px;color:var(--g2);font-family:var(--mono);max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 /* HAMBURGER */
 .hamburger{display:none;flex-direction:column;gap:5px;cursor:pointer;padding:4px;background:none;border:none}
@@ -849,6 +852,10 @@ pre{white-space:pre-wrap;word-break:break-word}
     <div id="nav-user" class="h" style="display:flex;align-items:center;gap:7px">
       <div class="nav-av" id="nav-av" onclick="go('dashboard')">?</div>
       <span class="nav-em" id="nav-em"></span>
+      <button class="nav-bell" id="nav-bell" onclick="goNotifications()" title="Notifikace" aria-label="Notifikace">
+        🔔
+        <span class="nav-bell-badge h" id="nav-bell-badge">0</span>
+      </button>
       <button id="nav-admin-btn" style="display:none;background:rgba(255,85,0,.15);border:1px solid rgba(255,85,0,.4);color:var(--orange);border-radius:var(--r2);padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--sans)" onclick="go('admin')">🛡️ Admin</button>
       <button class="bg" onclick="go('dashboard')">Dashboard</button>
       <button class="bg" onclick="signOut()">Odhlásit</button>
@@ -3851,9 +3858,22 @@ async function loadDash(){
     if(oErr||!ords||!ords.length){
       og.innerHTML=`<div class="empty"><div class="ei">🛒</div><div class="et">Žádné nákupy</div><div class="ed">Prohlédni nabídky v marketplace.</div><button class="bsm bsm-o" onclick="go('home')" style="margin-top:4px">Prohlédnout →</button></div>`;
     } else {
-      og.innerHTML=ords.map(o=>`
-        <div style="background:var(--bg2);border:1px solid var(--border2);border-radius:12px;padding:20px;margin-bottom:14px">
-          <!-- Hlavička: inzerát info -->
+      // Načti aktuální stav inzerátů abychom věděli co je zaplaceno
+      const listingIds=[...new Set(ords.map(o=>o.listing_id).filter(Boolean))];
+      let listingStatusMap={};
+      if(listingIds.length){
+        const{data:lStatuses}=await sb.from('listings').select('id,status').in('id',listingIds);
+        (lStatuses||[]).forEach(l=>{listingStatusMap[l.id]=l.status;});
+      }
+      og.innerHTML=ords.map(o=>{
+        const lstatus=listingStatusMap[o.listing_id]||'reserved';
+        const isSold=lstatus==='sold';
+        const statusBadge=isSold
+          ?`<span style="background:var(--gdim);color:var(--green);border:1px solid var(--gbrd);border-radius:6px;font-family:var(--mono);font-size:10px;padding:3px 9px;font-weight:600">✅ Koupeno</span>`
+          :`<span style="background:rgba(245,158,11,.12);color:var(--amber);border:1px solid rgba(245,158,11,.3);border-radius:6px;font-family:var(--mono);font-size:10px;padding:3px 9px">⏳ Čeká na platbu</span>`;
+        return `
+        <div style="background:var(--bg2);border:1px solid ${isSold?'var(--gbrd)':'var(--border2)'};border-radius:12px;padding:20px;margin-bottom:14px">
+          <!-- Hlavička -->
           <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--border)">
             <div style="display:flex;align-items:center;gap:10px">
               <span class="pt ${ptC(o.platform)}">${esc(o.platform||'—')}</span>
@@ -3862,34 +3882,42 @@ async function loadDash(){
                 <div style="font-size:12px;color:var(--g2)">${esc(o.niche||'—')}</div>
               </div>
             </div>
-            <div style="display:flex;align-items:center;gap:8px">
-              <span style="background:rgba(245,158,11,.12);color:var(--amber);border:1px solid rgba(245,158,11,.3);border-radius:6px;font-family:var(--mono);font-size:10px;padding:3px 9px">⏳ Čeká na platbu</span>
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+              ${statusBadge}
               <span style="font-family:var(--mono);font-size:10px;color:var(--g2)">${o.created_at?new Date(o.created_at).toLocaleDateString('cs-CZ'):''}</span>
             </div>
           </div>
-          <!-- Platební instrukce — vždy viditelné -->
+          ${isSold?`
+          <!-- Stav: zaplaceno -->
+          <div style="background:var(--gdim);border:1px solid var(--gbrd);border-radius:8px;padding:14px 16px;margin-bottom:14px;display:flex;align-items:center;gap:12px">
+            <span style="font-size:22px">🎉</span>
+            <div>
+              <div style="font-size:13px;font-weight:600;color:var(--green)">Platba přijata — transakce probíhá</div>
+              <div style="font-size:12px;color:var(--g2);margin-top:3px">Prodejce byl informován o předání přístupů. Sleduj email nebo nás kontaktuj.</div>
+            </div>
+          </div>`:`
+          <!-- Platební instrukce — zobraz jen pokud ještě nezaplaceno -->
           <div style="background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:16px;margin-bottom:14px">
             <div style="font-family:var(--mono);font-size:10px;color:var(--orange);text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px">💳 Platební instrukce</div>
-            <div style="display:flex;flex-direction:column;gap:8px">
-              <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">
+            <div style="display:flex;flex-direction:column;gap:0">
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--border)">
                 <span style="font-size:12px;color:var(--g2)">Číslo účtu</span>
                 <span style="font-family:var(--mono);font-size:13px;color:var(--white);font-weight:600">${ULOVPROFIL_ACCOUNT}</span>
               </div>
-              <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--border)">
                 <span style="font-size:12px;color:var(--g2)">Variabilní symbol</span>
                 <span style="font-family:var(--mono);font-size:20px;color:var(--orange);font-weight:700;letter-spacing:.05em">${esc(o.transaction_vs||'—')}</span>
               </div>
-              <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--border)">
                 <span style="font-size:12px;color:var(--g2)">Částka k zaplacení</span>
                 <span style="font-family:var(--mono);font-size:18px;color:var(--white);font-weight:700">${fp(o.amount||0)} Kč</span>
               </div>
-              <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0">
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0">
                 <span style="font-size:12px;color:var(--g2)">Zpráva pro příjemce</span>
                 <span style="font-family:var(--mono);font-size:12px;color:var(--g2)">UlovProfil ${esc(o.transaction_vs||'')}</span>
               </div>
             </div>
           </div>
-          <!-- QR kód tlačítko + panel -->
           ${o.transaction_vs&&o.amount?`
           <button onclick="showOrdQR('qr-${o.id}',${o.amount},'${esc(o.transaction_vs)}',this)" style="width:100%;background:var(--odim);border:1px solid var(--obrd);border-radius:8px;padding:10px 14px;font-size:13px;font-weight:600;color:var(--orange);cursor:pointer;font-family:var(--sans);display:flex;align-items:center;justify-content:center;gap:8px;transition:all .15s" onmouseover="this.style.background='rgba(255,85,0,.2)'" onmouseout="this.style.background='var(--odim)'">
             📱 Zobrazit QR kód pro platbu
@@ -3897,14 +3925,12 @@ async function loadDash(){
           <div class="ord-qr-panel" id="qr-${o.id}">
             <div style="font-family:var(--mono);font-size:10px;color:var(--g2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px">QR platba — AirBank, mBank, ČSOB, KB…</div>
             <div class="ord-qr-inner" id="qr-inner-${o.id}"></div>
-            <div style="font-size:12px;color:var(--g1);margin-top:10px;line-height:1.7">
-              📱 Naskenuj QR v bankovní aplikaci<br>
-              💳 Částka a VS se vyplní automaticky
-            </div>
+            <div style="font-size:12px;color:var(--g1);margin-top:10px;line-height:1.7">📱 Naskenuj QR v bankovní aplikaci<br>💳 Částka a VS se vyplní automaticky</div>
             <div style="margin-top:8px;font-family:var(--mono);font-size:11px;color:var(--g2)">VS: <strong style="color:var(--orange)">${esc(o.transaction_vs)}</strong> · ${fp(o.amount)} Kč · ${ULOVPROFIL_ACCOUNT}</div>
           </div>`:''}
-        </div>
-      `).join('');
+          `}
+        </div>`;
+      }).join('');
     }
   }catch(err){
     console.error('loadDash orders error',err);
@@ -3918,33 +3944,33 @@ async function loadDash(){
     const badge=document.getElementById('notif-badge');
     const mobDot=document.getElementById('mob-notif-dot');
     const markBtn=document.getElementById('btn-mark-read');
-    // 1) Notifikace z admin_notifications (nové rezervace + sold z DB)
+    // Všechny záznamy kde je tento user prodejce — bez type filtru (robustní)
     const{data:dbNotifs}=await sb.from('admin_notifications')
       .select('id,type,listing_id,platform,followers,niche,amount,transaction_vs,created_at,buyer_email,buyer_nickname')
       .eq('seller_id',user.id)
-      .in('type',['new_order','listing_sold','listing_reserved'])
       .order('created_at',{ascending:false})
       .limit(50);
-    // 2) Fallback: prodané inzeráty které nemají notifikaci (starší záznamy)
+    // Fallback: prodané inzeráty bez záznamu v admin_notifications
     const{data:soldListings}=await sb.from('listings')
       .select('id,platform,followers,niche,price,updated_at')
       .eq('user_id',user.id)
       .eq('status','sold')
       .order('updated_at',{ascending:false})
       .limit(20);
-    const dbNotifListingIds=new Set((dbNotifs||[]).filter(n=>n.type==='listing_sold'||n.type==='new_order').map(n=>n.listing_id));
+    const dbSoldIds=new Set((dbNotifs||[]).filter(n=>n.type==='listing_sold').map(n=>n.listing_id));
     const soldFallback=(soldListings||[])
-      .filter(l=>!dbNotifListingIds.has(l.id))
-      .map(l=>({id:'sold_'+l.id,type:'listing_sold',listing_id:l.id,platform:l.platform,followers:l.followers,niche:l.niche,amount:l.price,created_at:l.updated_at,_fallback:true}));
-    // Merge a seřaď
+      .filter(l=>!dbSoldIds.has(l.id))
+      .map(l=>({id:'fb_'+l.id,type:'listing_sold',listing_id:l.id,platform:l.platform,followers:l.followers,niche:l.niche,amount:l.price,created_at:l.updated_at}));
     const allNotifs=[...(dbNotifs||[]),...soldFallback]
       .sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
+    const unreadCount=allNotifs.filter(n=>new Date(n.created_at).getTime()>seenTs).length;
+    // Aktualizuj badge v navbaru i v sidebaru
+    updateNavBellBadge(unreadCount);
     if(!allNotifs.length){
       nl.innerHTML=`<div class="empty"><div class="ei">🔔</div><div class="et">Žádné notifikace</div><div class="ed">Zobrazí se, jakmile někdo projeví zájem o tvůj inzerát.</div></div>`;
       badge.classList.add('h');mobDot.classList.add('h');
       if(markBtn) markBtn.style.display='none';
     } else {
-      const unreadCount=allNotifs.filter(n=>new Date(n.created_at).getTime()>seenTs).length;
       if(unreadCount>0){
         badge.textContent=unreadCount;badge.classList.remove('h');
         mobDot.classList.remove('h');
@@ -3956,6 +3982,7 @@ async function loadDash(){
       nl.innerHTML=allNotifs.map(n=>{
         const isUnread=new Date(n.created_at).getTime()>seenTs;
         const dt=n.created_at?new Date(n.created_at).toLocaleString('cs-CZ'):'';
+        // Typ: listing_sold = prodáno, vše ostatní (new_order, listing_reserved, null) = rezervace
         const isSold=n.type==='listing_sold';
         const buyer=n.buyer_nickname||n.buyer_email||null;
         if(isSold){
@@ -4059,6 +4086,20 @@ function updateProf(){
   const nav_em=document.getElementById('nav-em'); if(nav_em) nav_em.textContent=user.email;
   const nav_dn=document.getElementById('nav-drop-name'); if(nav_dn) nav_dn.textContent=nameFromEmail;
 }
+function goNotifications(){
+  if(!user){go('auth');return;}
+  go('dashboard');
+  // Počkej na render dashboardu a pak přepni na tab
+  setTimeout(()=>swDash('notifications',null),150);
+}
+
+function updateNavBellBadge(count){
+  const b=document.getElementById('nav-bell-badge');
+  if(!b) return;
+  if(count>0){b.textContent=count;b.classList.remove('h');}
+  else{b.classList.add('h');}
+}
+
 function swDash(tab,el){
   ['listings','notifications','orders','profile'].forEach(t=>{
     const b=document.getElementById('dnav-'+t);
