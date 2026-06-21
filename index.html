@@ -2524,7 +2524,7 @@ function esc(str){
 
 
 
-let user=null,allL=[],activeF='',detail=null,chListing=null;
+let user=null,allL=[],myL=[],activeF='',detail=null,chListing=null;
 // Payment state (bankovní převod)
 let admL=[],admF='pending';
 
@@ -3893,6 +3893,7 @@ async function loadDash(){
     const{data,error}=await sb.from('listings').select('id,user_id,platform,followers,niche,price,engagement,audience,account_age,description,photos,status,created_at,seller_email').eq('user_id',user.id).order('created_at',{ascending:false});
     if(error)throw error;
     const list=data||[];
+    myL=list;
     document.getElementById('ds-t').textContent=list.length;
     document.getElementById('ds-a').textContent=list.filter(l=>l.status==='active').length;
     document.getElementById('ds-p').textContent=list.filter(l=>l.status==='pending').length;
@@ -3931,7 +3932,7 @@ async function loadDash(){
             ${stBadge(l.status)}
             <div class="dlist-price">${fp(l.price)} Kč<small>tvá výplata</small></div>
             <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">
-              <button onclick="openEditListing(${parseInt(l.id)||0})" style="background:var(--bg3);color:var(--g1);border:1px solid var(--border2);border-radius:7px;font-size:11px;padding:5px 12px;cursor:pointer;font-family:var(--sans)" onmouseover="this.style.borderColor='var(--orange)';this.style.color='var(--white)'" onmouseout="this.style.borderColor='var(--border2)';this.style.color='var(--g1)'">✏️ Upravit</button>
+              <button onclick="openEditListing(myL.find(x=>x.id===${parseInt(l.id)||0}))" style="background:var(--bg3);color:var(--g1);border:1px solid var(--border2);border-radius:7px;font-size:11px;padding:5px 12px;cursor:pointer;font-family:var(--sans)" onmouseover="this.style.borderColor='var(--orange)';this.style.color='var(--white)'" onmouseout="this.style.borderColor='var(--border2)';this.style.color='var(--g1)'">✏️ Upravit</button>
               ${l.status!=='reserved'?`<button onclick="delL(${parseInt(l.id)||0})" style="background:var(--rdim);color:var(--red);border:1px solid var(--rbrd);border-radius:7px;font-size:11px;padding:5px 12px;cursor:pointer;font-family:var(--sans)">Smazat</button>`:'<span style="font-family:var(--mono);font-size:10px;color:var(--g2)">Nelze smazat<br>v rezervaci</span>'}
             </div>
           </div>
