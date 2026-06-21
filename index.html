@@ -2737,8 +2737,21 @@ async function init(){
         history.replaceState(null,'',window.location.pathname);
         return;
       }
+      // TOKEN_REFRESHED: Supabase obnovil JWT — neměníme nav stav pokud user již byl přihlášen
+      if(event==='TOKEN_REFRESHED'){
+        if(s?.user) user=s.user;
+        return;
+      }
+      // SIGNED_OUT: explicitní odhlášení
+      if(event==='SIGNED_OUT'){
+        user=null;
+        setNavG();
+        return;
+      }
+      // SIGNED_IN, INITIAL_SESSION, USER_UPDATED, MFA_CHALLENGE_VERIFIED
       user=s?.user||null;
-      user?setNavU(user):setNavG();
+      if(user){setNavU(user);startNotifRealtime(user.id);}
+      else setNavG();
     });
   }catch(e){setNavG();}
   document.getElementById('ls').style.opacity='0';
@@ -2838,8 +2851,6 @@ function setNavU(u){
       if(badge&&count>0){badge.textContent=count;badge.style.display='inline';}
     });
   }
-  // ── Realtime: live notifikace pro zvoneček ──
-  startNotifRealtime(u.id);
 }
 
 let _notifChannel=null;
@@ -2963,6 +2974,7 @@ async function doLogin(){
   // Použij e-mail přímo z odpovědi — user globální proměnná ještě nemusí být nastavená
   const loggedEmail=data?.user?.email||e;
   user=data?.user||null;
+  if(user){setNavU(user);startNotifRealtime(user.id);}
   toast('Přihlášení úspěšné 👋','success');
   go(isAdminUser(data?.user)?'admin':'dashboard');
 }
@@ -7752,7 +7764,7 @@ async function submitGate(){
   // Aktualizuj user a nav BEZ volání init() — init() by spustil handleRoute() a přesměroval na home
   try{
     const {data:{session}} = await sb.auth.getSession();
-    if(session){ user=session.user; setNavU(user); }
+    if(session){ user=session.user; setNavU(user); startNotifRealtime(user.id); }
   }catch(e){}
 
   toast('Účet vytvořen! Vítej na UlovProfil 🎉', 'success');
