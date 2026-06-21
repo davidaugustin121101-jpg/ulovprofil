@@ -437,6 +437,22 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;height:56px;display:flex;ali
 .dnavbtn:hover{background:var(--bg3);color:var(--white)}
 .dnavbtn.on{background:var(--odim);color:var(--orange);border:1px solid var(--obrd)}
 .dnavbtn-ic{font-size:16px;width:20px;text-align:center;flex-shrink:0}
+.dnavbtn-badge{margin-left:auto;background:var(--red);color:#fff;font-family:var(--mono);font-size:9px;font-weight:700;padding:2px 6px;border-radius:10px;min-width:18px;text-align:center;animation:pulse 1.5s infinite}
+/* NOTIFICATION CARDS */
+.notif-item{background:var(--bg2);border:1px solid var(--border2);border-radius:10px;padding:14px 16px;margin-bottom:10px;display:flex;align-items:flex-start;gap:12px;transition:border-color .2s}
+.notif-item.unread{border-color:rgba(245,158,11,.4);background:rgba(245,158,11,.04)}
+.notif-item:hover{border-color:var(--border3)}
+.notif-icon{width:36px;height:36px;border-radius:8px;background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.3);display:grid;place-items:center;font-size:16px;flex-shrink:0}
+.notif-icon.green{background:var(--gdim);border-color:var(--gbrd)}
+.notif-body{flex:1;min-width:0}
+.notif-title{font-size:13px;font-weight:600;color:var(--white);margin-bottom:3px}
+.notif-meta{font-family:var(--mono);font-size:10px;color:var(--g2)}
+.notif-dot{width:8px;height:8px;border-radius:50%;background:var(--amber);flex-shrink:0;margin-top:4px}
+/* QR TOGGLE IN ORDERS */
+.ord-qr-panel{margin-top:12px;padding:14px;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;display:none;text-align:center}
+.ord-qr-panel.open{display:block}
+.ord-qr-inner{display:inline-block;background:#fff;padding:10px;border-radius:8px;margin-bottom:8px}
+.ord-qr-inner canvas,.ord-qr-inner img{width:140px!important;height:140px!important}
 .dmain{min-width:0}
 .dhd{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px}
 .dtitle{font-size:22px;font-weight:700;letter-spacing:-.02em}
@@ -722,7 +738,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;height:56px;display:flex;ali
   display:flex;flex-direction:column;align-items:center;gap:3px;
   background:none;border:none;color:var(--g2);
   font-size:10px;font-family:var(--mono);
-  padding:6px 12px;border-radius:8px;
+  padding:6px 7px;border-radius:8px;
   cursor:pointer;transition:color .15s;
   font-weight:500;letter-spacing:.03em;min-height:unset;
 }
@@ -1438,6 +1454,7 @@ pre{white-space:pre-wrap;word-break:break-word}
         </div>
       </div>
       <button class="dnavbtn on" id="dnav-listings" onclick="swDash('listings',this)"><span class="dnavbtn-ic">📋</span>Moje nabídky</button>
+      <button class="dnavbtn" id="dnav-notifications" onclick="swDash('notifications',this)"><span class="dnavbtn-ic">🔔</span>Notifikace<span class="dnavbtn-badge h" id="notif-badge">0</span></button>
       <button class="dnavbtn" id="dnav-orders" onclick="swDash('orders',this)"><span class="dnavbtn-ic">🛒</span>Moje nákupy</button>
       <button class="dnavbtn" id="dnav-profile" onclick="swDash('profile',this)"><span class="dnavbtn-ic">👤</span>Profil & nastavení</button>
       <div style="height:1px;background:var(--border);margin:8px 0"></div>
@@ -1485,6 +1502,15 @@ pre{white-space:pre-wrap;word-break:break-word}
           <button class="bo" onclick="openAdd()" style="font-size:13px;padding:8px 16px">+ Přidat nabídku</button>
         </div>
         <div id="my-grid"></div>
+      </div>
+
+      <!-- TAB: NOTIFICATIONS (seller) -->
+      <div id="dt-n" class="h">
+        <div class="dhd" style="margin-bottom:14px">
+          <div class="dtitle">🔔 <span>Notifikace</span></div>
+          <button onclick="markAllNotifsRead()" id="btn-mark-read" style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);padding:7px 14px;font-size:12px;color:var(--g1);cursor:pointer;font-family:var(--sans);display:none">✓ Označit vše jako přečtené</button>
+        </div>
+        <div id="notif-list"></div>
       </div>
 
       <!-- TAB: ORDERS -->
@@ -1565,6 +1591,10 @@ pre{white-space:pre-wrap;word-break:break-word}
     <div class="dmobile-nav-inner">
       <button class="dmob-btn on" id="dmob-listings" onclick="swDash('listings',this);updateMobNav('listings')">
         <span class="dmob-ic">📋</span>Nabídky
+      </button>
+      <button class="dmob-btn" id="dmob-notifications" onclick="swDash('notifications',this);updateMobNav('notifications')" style="position:relative">
+        <span class="dmob-ic">🔔</span>Notifikace
+        <span id="mob-notif-dot" class="h" style="position:absolute;top:6px;right:8px;width:8px;height:8px;border-radius:50%;background:var(--red)"></span>
       </button>
       <button class="dmob-btn" id="dmob-orders" onclick="swDash('orders',this);updateMobNav('orders')">
         <span class="dmob-ic">🛒</span>Nákupy
@@ -3820,33 +3850,152 @@ async function loadDash(){
     const og=document.getElementById('ord-grid');
     if(oErr||!ords||!ords.length){
       og.innerHTML=`<div class="empty"><div class="ei">🛒</div><div class="et">Žádné nákupy</div><div class="ed">Prohlédni nabídky v marketplace.</div><button class="bsm bsm-o" onclick="go('home')" style="margin-top:4px">Prohlédnout →</button></div>`;
-      return;
+    } else {
+      og.innerHTML=ords.map(o=>`
+        <div style="background:var(--bg2);border:1px solid var(--border2);border-radius:12px;padding:20px;margin-bottom:14px">
+          <!-- Hlavička: inzerát info -->
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--border)">
+            <div style="display:flex;align-items:center;gap:10px">
+              <span class="pt ${ptC(o.platform)}">${esc(o.platform||'—')}</span>
+              <div>
+                <div style="font-size:14px;font-weight:600;color:var(--white)">${esc(String(o.followers||'—'))}</div>
+                <div style="font-size:12px;color:var(--g2)">${esc(o.niche||'—')}</div>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <span style="background:rgba(245,158,11,.12);color:var(--amber);border:1px solid rgba(245,158,11,.3);border-radius:6px;font-family:var(--mono);font-size:10px;padding:3px 9px">⏳ Čeká na platbu</span>
+              <span style="font-family:var(--mono);font-size:10px;color:var(--g2)">${o.created_at?new Date(o.created_at).toLocaleDateString('cs-CZ'):''}</span>
+            </div>
+          </div>
+          <!-- Platební instrukce — vždy viditelné -->
+          <div style="background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:16px;margin-bottom:14px">
+            <div style="font-family:var(--mono);font-size:10px;color:var(--orange);text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px">💳 Platební instrukce</div>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">
+                <span style="font-size:12px;color:var(--g2)">Číslo účtu</span>
+                <span style="font-family:var(--mono);font-size:13px;color:var(--white);font-weight:600">${ULOVPROFIL_ACCOUNT}</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">
+                <span style="font-size:12px;color:var(--g2)">Variabilní symbol</span>
+                <span style="font-family:var(--mono);font-size:20px;color:var(--orange);font-weight:700;letter-spacing:.05em">${esc(o.transaction_vs||'—')}</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">
+                <span style="font-size:12px;color:var(--g2)">Částka k zaplacení</span>
+                <span style="font-family:var(--mono);font-size:18px;color:var(--white);font-weight:700">${fp(o.amount||0)} Kč</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0">
+                <span style="font-size:12px;color:var(--g2)">Zpráva pro příjemce</span>
+                <span style="font-family:var(--mono);font-size:12px;color:var(--g2)">UlovProfil ${esc(o.transaction_vs||'')}</span>
+              </div>
+            </div>
+          </div>
+          <!-- QR kód tlačítko + panel -->
+          ${o.transaction_vs&&o.amount?`
+          <button onclick="showOrdQR('qr-${o.id}',${o.amount},'${esc(o.transaction_vs)}',this)" style="width:100%;background:var(--odim);border:1px solid var(--obrd);border-radius:8px;padding:10px 14px;font-size:13px;font-weight:600;color:var(--orange);cursor:pointer;font-family:var(--sans);display:flex;align-items:center;justify-content:center;gap:8px;transition:all .15s" onmouseover="this.style.background='rgba(255,85,0,.2)'" onmouseout="this.style.background='var(--odim)'">
+            📱 Zobrazit QR kód pro platbu
+          </button>
+          <div class="ord-qr-panel" id="qr-${o.id}">
+            <div style="font-family:var(--mono);font-size:10px;color:var(--g2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px">QR platba — AirBank, mBank, ČSOB, KB…</div>
+            <div class="ord-qr-inner" id="qr-inner-${o.id}"></div>
+            <div style="font-size:12px;color:var(--g1);margin-top:10px;line-height:1.7">
+              📱 Naskenuj QR v bankovní aplikaci<br>
+              💳 Částka a VS se vyplní automaticky
+            </div>
+            <div style="margin-top:8px;font-family:var(--mono);font-size:11px;color:var(--g2)">VS: <strong style="color:var(--orange)">${esc(o.transaction_vs)}</strong> · ${fp(o.amount)} Kč · ${ULOVPROFIL_ACCOUNT}</div>
+          </div>`:''}
+        </div>
+      `).join('');
     }
-    og.innerHTML=ords.map(o=>`
-      <div class="lcard" style="cursor:default">
-        <div class="lct">
-          <span class="pt ${ptC(o.platform)}">${esc(o.platform||'—')}</span>
-          <span class="st st-p">⏳ Čeká na platbu</span>
-        </div>
-        <div class="lcf">${esc(String(o.followers||'—'))}</div>
-        <div class="lcn">${esc(o.niche||'—')}</div>
-        ${o.transaction_vs?`<div style="font-family:var(--mono);font-size:11px;color:var(--g2);margin-top:6px">VS: <strong style="color:var(--orange)">${esc(o.transaction_vs)}</strong></div>`:''}
-        <div style="font-family:var(--mono);font-size:10px;color:var(--g2);margin-top:4px">${o.created_at?new Date(o.created_at).toLocaleString('cs-CZ'):''}</div>
-        <div class="lcfo" style="margin-top:14px">
-          <div class="lcp">${fp(o.amount||0)} Kč</div>
-          <div style="font-size:11px;color:var(--amber);font-family:var(--mono);margin-top:6px">Zaplaťte na účet ${ULOVPROFIL_ACCOUNT}</div>
-        </div>
-      </div>
-    `).join('');
   }catch(err){
     console.error('loadDash orders error',err);
     document.getElementById('ord-grid').innerHTML=`<div class="err-banner">⚠️ Nepodařilo se načíst nákupy.<button onclick="loadDash()">Zkusit znovu</button></div>`;
+  }
+  // Notifikace pro prodejce — objednávky na moje inzeráty
+  try{
+    const{data:sellerNotifs,error:snErr}=await sb.from('admin_notifications')
+      .select('id,listing_id,platform,followers,niche,amount,transaction_vs,created_at,buyer_email,buyer_nickname')
+      .eq('seller_id',user.id)
+      .order('created_at',{ascending:false})
+      .limit(50);
+    const nl=document.getElementById('notif-list');
+    const badge=document.getElementById('notif-badge');
+    const mobDot=document.getElementById('mob-notif-dot');
+    const markBtn=document.getElementById('btn-mark-read');
+    const seenKey='seen_notifs_ts_'+user.id;
+    const seenTs=parseInt(localStorage.getItem(seenKey)||'0');
+    if(snErr||!sellerNotifs||!sellerNotifs.length){
+      nl.innerHTML=`<div class="empty"><div class="ei">🔔</div><div class="et">Žádné notifikace</div><div class="ed">Zobrazí se, jakmile někdo projeví zájem o tvůj inzerát.</div></div>`;
+      badge.classList.add('h'); mobDot.classList.add('h');
+    } else {
+      const unreadCount=sellerNotifs.filter(n=>new Date(n.created_at).getTime()>seenTs).length;
+      if(unreadCount>0){
+        badge.textContent=unreadCount;badge.classList.remove('h');
+        mobDot.classList.remove('h');
+        if(markBtn) markBtn.style.display='';
+      } else {
+        badge.classList.add('h');mobDot.classList.add('h');
+        if(markBtn) markBtn.style.display='none';
+      }
+      nl.innerHTML=sellerNotifs.map(n=>{
+        const isUnread=new Date(n.created_at).getTime()>seenTs;
+        const dt=n.created_at?new Date(n.created_at).toLocaleString('cs-CZ'):'';
+        const buyer=n.buyer_nickname||n.buyer_email||'Kupující';
+        return `<div class="notif-item${isUnread?' unread':''}">
+          <div class="notif-icon">${isUnread?'🔔':'📋'}</div>
+          <div class="notif-body">
+            <div class="notif-title">🔒 Tvůj inzerát byl rezervován</div>
+            <div style="font-size:13px;color:var(--g1);margin:5px 0 6px">${esc(n.platform||'—')} · ${esc(String(n.followers||'—'))} · ${esc(n.niche||'—')}</div>
+            <div style="font-size:12px;color:var(--g2);line-height:1.6">Kupující <strong style="color:var(--white)">${esc(buyer)}</strong> potvrdil zájem a čeká se na připsání platby ${n.amount?'<strong style="color:var(--orange)">'+fp(n.amount)+' Kč</strong>':''} na účet UlovProfil.<br>VS: <span style="font-family:var(--mono);color:var(--orange)">${esc(n.transaction_vs||'—')}</span></div>
+            <div class="notif-meta" style="margin-top:6px">${dt}</div>
+          </div>
+          ${isUnread?'<div class="notif-dot" title="Nepřečteno"></div>':''}
+        </div>`;
+      }).join('');
+    }
+  }catch(err){
+    console.error('loadDash notifs error',err);
   }
 }
 async function confirmOrd(id){
   if(!confirm('Potvrzuješ přijetí účtu? Tím souhlasíš s uvolněním platby prodejci.'))return;
   await sb.from('transactions').update({status:'completed',confirmed_at:new Date().toISOString()}).eq('id',id);
   toast('Transakce potvrzena! Vyplácíme prodejce. ✅','success');loadDash();
+}
+
+function showOrdQR(panelId, amount, vs, btn){
+  const panel=document.getElementById(panelId);
+  if(!panel) return;
+  const isOpen=panel.classList.contains('open');
+  panel.classList.toggle('open',!isOpen);
+  if(btn) btn.textContent=isOpen?'📱 Zobrazit QR kód pro platbu':'✕ Skrýt QR kód';
+  if(!isOpen){
+    const inner=document.getElementById('qr-inner-'+panelId.replace('qr-',''));
+    if(inner&&!inner.hasChildNodes()&&typeof QRCode!=='undefined'){
+      new QRCode(inner,{text:buildSPAYD(amount,vs,'UlovProfil '+vs),width:140,height:140,colorDark:'#000',colorLight:'#fff',correctLevel:QRCode.CorrectLevel.M});
+    }
+  }
+}
+
+function markAllNotifsRead(){
+  if(!user) return;
+  const seenKey='seen_notifs_ts_'+user.id;
+  localStorage.setItem(seenKey, Date.now());
+  const nl=document.getElementById('notif-list');
+  if(nl){
+    nl.querySelectorAll('.notif-item.unread').forEach(el=>{
+      el.classList.remove('unread');
+      const dot=el.querySelector('.notif-dot');
+      if(dot) dot.remove();
+      const ic=el.querySelector('.notif-icon');
+      if(ic) ic.textContent='📋';
+    });
+  }
+  const badge=document.getElementById('notif-badge');
+  const mobDot=document.getElementById('mob-notif-dot');
+  const markBtn=document.getElementById('btn-mark-read');
+  if(badge) badge.classList.add('h');
+  if(mobDot) mobDot.classList.add('h');
+  if(markBtn) markBtn.style.display='none';
 }
 async function delL(id){
   if(!id||id===0){toast('Chyba: neplatné ID inzerátu','error');return;}
@@ -3880,20 +4029,21 @@ function updateProf(){
   const nav_dn=document.getElementById('nav-drop-name'); if(nav_dn) nav_dn.textContent=nameFromEmail;
 }
 function swDash(tab,el){
-  // Sidebar nav buttons
-  ['listings','orders','profile'].forEach(t=>{
+  ['listings','notifications','orders','profile'].forEach(t=>{
     const b=document.getElementById('dnav-'+t);
     if(b) b.classList.toggle('on', t===tab);
   });
   document.getElementById('dt-l').classList.toggle('h',tab!=='listings');
+  document.getElementById('dt-n').classList.toggle('h',tab!=='notifications');
   document.getElementById('dt-o').classList.toggle('h',tab!=='orders');
   document.getElementById('dt-p').classList.toggle('h',tab!=='profile');
   if(tab==='profile') loadProfile();
+  if(tab==='notifications') markAllNotifsRead();
   updateMobNav(tab);
 }
 
 function updateMobNav(tab){
-  ['listings','orders','profile'].forEach(t=>{
+  ['listings','notifications','orders','profile'].forEach(t=>{
     const b=document.getElementById('dmob-'+t);
     if(b) b.classList.toggle('on', t===tab);
   });
