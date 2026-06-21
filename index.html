@@ -1822,6 +1822,7 @@ pre{white-space:pre-wrap;word-break:break-word}
     <div style="display:flex;gap:6px;margin-bottom:16px;border-bottom:1px solid var(--border);padding-bottom:0">
       <button id="adm-tab-listings" onclick="swAdmTab('listings',this)" style="background:var(--orange);border:none;border-radius:var(--r2) var(--r2) 0 0;padding:10px 20px;font-size:13px;font-weight:700;color:#fff;cursor:pointer;font-family:var(--sans)">📋 Inzeráty</button>
       <button id="adm-tab-orders" onclick="swAdmTab('orders',this)" style="background:var(--bg3);border:1px solid var(--border);border-bottom:none;border-radius:var(--r2) var(--r2) 0 0;padding:10px 20px;font-size:13px;font-weight:600;color:var(--g1);cursor:pointer;font-family:var(--sans)">🛒 Objednávky <span id="adm-orders-badge" style="background:var(--red);color:#fff;border-radius:10px;padding:1px 7px;font-size:10px;margin-left:4px;display:none"></span></button>
+      <button id="adm-tab-sold" onclick="swAdmTab('sold',this)" style="background:var(--bg3);border:1px solid var(--border);border-bottom:none;border-radius:var(--r2) var(--r2) 0 0;padding:10px 20px;font-size:13px;font-weight:600;color:var(--g1);cursor:pointer;font-family:var(--sans)">✅ Prodané <span id="adm-sold-badge" style="background:var(--green);color:#fff;border-radius:10px;padding:1px 7px;font-size:10px;margin-left:4px;display:none"></span></button>
       <button id="adm-tab-users" onclick="swAdmTab('users',this)" style="background:var(--bg3);border:1px solid var(--border);border-bottom:none;border-radius:var(--r2) var(--r2) 0 0;padding:10px 20px;font-size:13px;font-weight:600;color:var(--g1);cursor:pointer;font-family:var(--sans)">👤 Uživatelé</button>
     </div>
 
@@ -1850,6 +1851,15 @@ pre{white-space:pre-wrap;word-break:break-word}
         <button onclick="markAllOrdersRead()" style="background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r2);padding:6px 14px;font-size:12px;color:var(--g1);cursor:pointer;font-family:var(--sans)">✓ Označit vše jako přečtené</button>
       </div>
       <div id="adm-orders-rows"><div class="empty"><div class="ei">🛒</div><div class="et">Načítám objednávky…</div></div></div>
+    </div>
+
+    <!-- ═══ SOLD PANEL ═══ -->
+    <div id="adm-panel-sold" style="display:none">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap">
+        <div style="font-family:var(--mono);font-size:11px;color:var(--g2)" id="adm-sold-count"></div>
+        <button onclick="loadAdminSold()" style="margin-left:auto;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r2);padding:6px 14px;font-size:12px;color:var(--g1);cursor:pointer;font-family:var(--sans)">↺ Obnovit</button>
+      </div>
+      <div id="adm-sold-rows"><div class="empty"><div class="ei">✅</div><div class="et">Načítám prodané objednávky…</div></div></div>
     </div>
 
     <!-- ═══ USERS PANEL ═══ -->
@@ -5555,8 +5565,7 @@ async function loadAdmin(){
 
 function swAdmTab(tab, el){
   admCurrentTab=tab;
-  // Tab style
-  ['adm-tab-listings','adm-tab-orders','adm-tab-users'].forEach(id=>{
+  ['adm-tab-listings','adm-tab-orders','adm-tab-sold','adm-tab-users'].forEach(id=>{
     const b=document.getElementById(id);
     if(!b) return;
     const active=b.id==='adm-tab-'+tab;
@@ -5569,9 +5578,12 @@ function swAdmTab(tab, el){
   document.getElementById('adm-panel-listings').style.display=tab==='listings'?'block':'none';
   const ordPanel=document.getElementById('adm-panel-orders');
   if(ordPanel) ordPanel.style.display=tab==='orders'?'block':'none';
+  const soldPanel=document.getElementById('adm-panel-sold');
+  if(soldPanel) soldPanel.style.display=tab==='sold'?'block':'none';
   document.getElementById('adm-panel-users').style.display=tab==='users'?'block':'none';
   if(tab==='users') renderAdmUsers(admUsersAll);
   if(tab==='orders') loadAdminOrders();
+  if(tab==='sold') loadAdminSold();
 }
 
 let admOrdersAll=[];
@@ -5582,6 +5594,7 @@ async function loadAdminOrders(){
   try{
     const{data,error}=await sb.from('admin_notifications')
       .select('*')
+      .eq('type','new_order')
       .order('created_at',{ascending:false})
       .limit(200);
     if(error) throw error;
@@ -5710,8 +5723,12 @@ async function admMarkListingReserved(listingId){
 async function admCancelReservation(listingId){
   if(!listingId){toast('Chybí ID inzerátu','error');return;}
   if(!confirm('Zrušit rezervaci a vrátit inzerát zpět do prodeje?'))return;
-  const{error}=await sb.from('listings').update({status:'active'}).eq('id',listingId);
+  const{error}=await sb.from('listings').update({status:'active',reserved_order_id:null}).eq('id',listingId);
   if(error){toast('Chyba: '+error.message,'error');return;}
+  // Smaž záznam z admin_notifications (zmizí z Objednávek)
+  await sb.from('admin_notifications').delete().eq('listing_id',listingId).eq('type','new_order');
+  // Zruš také orders záznam
+  await sb.from('orders').update({status:'CANCELLED',cancelled_at:new Date().toISOString()}).eq('listing_id',listingId).neq('status','COMPLETED');
   toast('Rezervace zrušena — inzerát je zpět v prodeji ✅','success');
   loadAdmin();loadPub();loadAdminOrders();
 }
@@ -5720,7 +5737,14 @@ async function admMarkListingSold(listingId, notifId){
   if(!listingId){toast('Chybí ID inzerátu','error');return;}
   if(!confirm('Opravdu označit inzerát #'+listingId+' jako PRODÁNO?'))return;
   await sb.from('listings').update({status:'sold'}).eq('id',listingId);
-  if(notifId) await sb.from('admin_notifications').update({is_read:true}).eq('id',notifId);
+  // Přesuň záznam z Objednávek → Prodané změnou typu na order_sold
+  if(notifId){
+    await sb.from('admin_notifications').update({type:'order_sold',is_read:true}).eq('id',notifId);
+  } else {
+    await sb.from('admin_notifications').update({type:'order_sold',is_read:true}).eq('listing_id',listingId).eq('type','new_order');
+  }
+  // Aktualizuj orders tabulku
+  await sb.from('orders').update({status:'COMPLETED',completed_at:new Date().toISOString()}).eq('listing_id',listingId).neq('status','CANCELLED');
   // Ulož sold notifikaci pro prodejce
   try{
     const listing=admAllL.find(l=>l.id===listingId);
@@ -5745,7 +5769,71 @@ async function admMarkListingSold(listingId, notifId){
     }
   }catch(e){console.warn('admMarkListingSold notify:',e);}
   toast('Inzerát označen jako PRODÁNO ✅','success');
-  loadAdmin();loadPub();loadAdminOrders();
+  loadAdmin();loadPub();loadAdminOrders();loadAdminSold();
+}
+
+async function loadAdminSold(){
+  const el=document.getElementById('adm-sold-rows');
+  if(el) el.innerHTML=`<div class="empty"><div class="ei">⏳</div><div class="et">Načítám...</div></div>`;
+  try{
+    const{data,error}=await sb.from('admin_notifications')
+      .select('*')
+      .eq('type','order_sold')
+      .order('created_at',{ascending:false})
+      .limit(200);
+    if(error) throw error;
+    const list=data||[];
+    const cnt=document.getElementById('adm-sold-count');
+    if(cnt) cnt.textContent=list.length+' prodaných objednávek';
+    const badge=document.getElementById('adm-sold-badge');
+    if(badge){badge.textContent=list.length;badge.style.display=list.length>0?'inline':'none';}
+    if(!el) return;
+    if(!list.length){
+      el.innerHTML=`<div class="empty"><div class="ei">✅</div><div class="et">Zatím žádné prodané objednávky</div></div>`;
+      return;
+    }
+    el.innerHTML=list.map(n=>{
+      const dateStr=n.created_at?new Date(n.created_at).toLocaleString('cs-CZ'):'—';
+      return `
+      <div style="background:rgba(34,197,94,.03);border:1px solid rgba(34,197,94,.2);border-radius:var(--r2);margin-bottom:10px;overflow:hidden">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:var(--bg3);border-bottom:1px solid var(--border);flex-wrap:wrap;gap:8px">
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="font-size:14px">✅</span>
+            <span style="font-family:var(--mono);font-size:12px;color:var(--green);font-weight:700">VS: ${esc(n.transaction_vs||'—')}</span>
+            <span class="pt ${ptC(n.platform||'')}">${esc(n.platform||'—')}</span>
+            <span style="font-family:var(--mono);font-size:13px;color:var(--white);font-weight:700">${fp(n.amount||0)} Kč</span>
+          </div>
+          <span style="font-family:var(--mono);font-size:10px;color:var(--g2)">${esc(dateStr)}</span>
+        </div>
+        <div class="adm-order-cols" style="display:grid;grid-template-columns:1fr 1fr;gap:0">
+          <div style="padding:14px 16px;border-right:1px solid var(--border)">
+            <div style="font-family:var(--mono);font-size:9px;color:var(--orange);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">🛒 Kupující</div>
+            <div style="display:flex;flex-direction:column;gap:5px">
+              <div style="font-size:12px"><span style="color:var(--g2)">Nick:</span> <strong style="color:var(--white)">${esc(n.buyer_nickname||'—')}</strong></div>
+              <div style="font-size:12px"><span style="color:var(--g2)">E-mail:</span> <a href="mailto:${esc(n.buyer_email||'')}" style="color:var(--orange);font-family:var(--mono)">${esc(n.buyer_email||'—')}</a></div>
+              <div style="font-size:12px"><span style="color:var(--g2)">Tel:</span> ${n.buyer_phone?`<a href="tel:${esc(n.buyer_phone)}" style="color:var(--green);font-family:var(--mono)">${esc(n.buyer_phone)}</a>`:'<span style="color:var(--g2)">—</span>'}</div>
+            </div>
+          </div>
+          <div style="padding:14px 16px">
+            <div style="font-family:var(--mono);font-size:9px;color:var(--green);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">💰 Prodejce</div>
+            <div style="display:flex;flex-direction:column;gap:5px">
+              <div style="font-size:12px"><span style="color:var(--g2)">Nick:</span> <strong style="color:var(--white)">${esc(n.seller_nickname||'—')}</strong></div>
+              <div style="font-size:12px"><span style="color:var(--g2)">E-mail:</span> <a href="mailto:${esc(n.seller_email||'')}" style="color:var(--orange);font-family:var(--mono)">${esc(n.seller_email||'—')}</a></div>
+              <div style="font-size:12px"><span style="color:var(--g2)">Tel:</span> ${n.seller_phone?`<a href="tel:${esc(n.seller_phone)}" style="color:var(--green);font-family:var(--mono)">${esc(n.seller_phone)}</a>`:'<span style="color:var(--g2)">—</span>'}</div>
+            </div>
+          </div>
+        </div>
+        <div style="padding:10px 16px;border-top:1px solid var(--border);display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+          <span style="font-size:12px;color:var(--g2)">Inzerát: <strong style="color:var(--white)">${esc(n.platform||'—')} · ${esc(n.followers||'—')} · ${esc(n.niche||'—')}</strong></span>
+          <span style="font-family:var(--mono);font-size:11px;color:var(--g2)">#${n.listing_id||'—'}</span>
+          <span style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--green);background:var(--gdim);border:1px solid var(--gbrd);border-radius:6px;padding:4px 10px">✅ Prodáno</span>
+        </div>
+      </div>`;
+    }).join('');
+  }catch(e){
+    const el=document.getElementById('adm-sold-rows');
+    if(el) el.innerHTML=`<div class="empty" style="padding:30px"><div class="ei">⚠️</div><div class="et">Chyba načítání: ${esc(String(e?.message||e))}</div></div>`;
+  }
 }
 
 function filterAdm(q){
