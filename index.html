@@ -2737,6 +2737,12 @@ async function init(){
       if(event==='SIGNED_OUT'){
         user=null;
         setNavG();
+        // Vymaž stará profilová data aby se nezobrazila po přihlášení jiného účtu
+        const imgOut=document.getElementById('prof-av-img');
+        if(imgOut){imgOut.src='';imgOut.style.display='none';}
+        const pavOut=document.getElementById('pav');if(pavOut)pavOut.style.display='';
+        const profName=document.getElementById('prof-name');if(profName)profName.value='';
+        const profEmail=document.getElementById('prof-email-disp');if(profEmail)profEmail.value='';
         return;
       }
       // SIGNED_IN, INITIAL_SESSION, USER_UPDATED, MFA_CHALLENGE_VERIFIED
@@ -3025,6 +3031,11 @@ async function saveProfile(){
 async function loadProfile(){
   if(!user)return;
   try{
+    // Vždy nejdřív reset avataru — aby se nezobrazila fotka předchozího účtu
+    const imgReset=document.getElementById('prof-av-img');
+    if(imgReset){imgReset.src='';imgReset.style.display='none';}
+    const pavReset=document.getElementById('pav');if(pavReset)pavReset.style.display='';
+
     const{data}=await sb.from('profiles').select('username,avatar_url,bio').eq('user_id',user.id).single();
     if(data){
       if(data.username){
@@ -5904,26 +5915,39 @@ function renderAdmCard(l){
       </div>
       ${l.description?`<div style="padding:0 16px 12px"><div style="font-family:var(--mono);font-size:9px;color:var(--g2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Popis</div><div style="font-size:12px;color:var(--g1);line-height:1.6;background:var(--bg3);border-radius:8px;padding:8px 12px">${esc(l.description)}</div></div>`:''}
       <!-- Akční buttony -->
-      <div style="padding:12px 16px;border-top:1px solid var(--border);display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-        ${l.status==='pending'?`
-          <button onclick="admUpd(${lid},'active')" style="background:#22c55e;border:none;border-radius:var(--r2);padding:9px 20px;font-size:13px;font-weight:700;color:#fff;cursor:pointer;font-family:var(--sans);display:flex;align-items:center;gap:6px">✓ Schválit a zveřejnit</button>
-          <button onclick="admUpd(${lid},'rejected')" style="background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.4);border-radius:var(--r2);padding:9px 20px;font-size:13px;font-weight:700;color:#f87171;cursor:pointer;font-family:var(--sans)">✗ Zamítnout</button>
-        `:''}
-        ${l.status==='active'?`
-          <button onclick="admUpd(${lid},'reserved')" style="background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.4);border-radius:var(--r2);padding:8px 16px;font-size:12px;font-weight:600;color:var(--amber);cursor:pointer;font-family:var(--sans)">🔒 Rezervováno</button>
-          <button onclick="admUpd(${lid},'sold')" style="background:rgba(255,85,0,.15);border:1px solid rgba(255,85,0,.4);border-radius:var(--r2);padding:8px 16px;font-size:12px;font-weight:600;color:var(--orange);cursor:pointer;font-family:var(--sans)">💰 Prodáno</button>
-          <button onclick="admUpd(${lid},'rejected')" style="background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.25);border-radius:var(--r2);padding:8px 16px;font-size:12px;font-weight:600;color:#f87171;cursor:pointer;font-family:var(--sans)">Skrýt</button>
-        `:''}
-        ${l.status==='reserved'?`
-          <div style="display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:10px;color:#f59e0b;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);border-radius:var(--r2);padding:6px 10px">🔒 Rezervováno — čeká na platbu od kupujícího</div>
-          <button onclick="admUpd(${lid},'sold')" style="background:rgba(255,85,0,.15);border:1px solid rgba(255,85,0,.4);border-radius:var(--r2);padding:8px 16px;font-size:12px;font-weight:600;color:var(--orange);cursor:pointer;font-family:var(--sans)">💰 Platba přijata → Prodáno</button>
-          <button onclick="admUpd(${lid},'active')" style="background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.2);border-radius:var(--r2);padding:8px 16px;font-size:12px;font-weight:600;color:var(--green);cursor:pointer;font-family:var(--sans)">↩ Zrušit rezervaci</button>
-        `:''}
-        ${l.status==='rejected'?`
-          <button onclick="admUpd(${lid},'active')" style="background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);border-radius:var(--r2);padding:8px 16px;font-size:12px;font-weight:600;color:var(--green);cursor:pointer;font-family:var(--sans)">↩ Obnovit jako aktivní</button>
-          <button onclick="admUpd(${lid},'pending')" style="background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);border-radius:var(--r2);padding:8px 16px;font-size:12px;font-weight:600;color:var(--amber);cursor:pointer;font-family:var(--sans)">Vrátit do fronty</button>
-        `:''}
-        <button onclick="admDel(${lid})" style="margin-left:auto;background:none;border:1px solid rgba(239,68,68,.2);border-radius:var(--r2);padding:7px 14px;font-size:11px;color:var(--g2);cursor:pointer;font-family:var(--sans)" onmouseover="this.style.color='#f87171';this.style.borderColor='rgba(239,68,68,.5)'" onmouseout="this.style.color='var(--g2)';this.style.borderColor='rgba(239,68,68,.2)'">🗑 Smazat</button>
+      <div style="padding:12px 16px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:10px">
+        <!-- Kontextové primární akce -->
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          ${l.status==='pending'?`
+            <button onclick="admUpd(${lid},'active')" style="background:#22c55e;border:none;border-radius:var(--r2);padding:9px 20px;font-size:13px;font-weight:700;color:#fff;cursor:pointer;font-family:var(--sans)">✓ Schválit a zveřejnit</button>
+            <button onclick="admUpd(${lid},'rejected')" style="background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.4);border-radius:var(--r2);padding:9px 20px;font-size:13px;font-weight:700;color:#f87171;cursor:pointer;font-family:var(--sans)">✗ Zamítnout</button>
+          `:''}
+          ${l.status==='active'?`
+            <button onclick="admUpd(${lid},'reserved')" style="background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.4);border-radius:var(--r2);padding:8px 16px;font-size:12px;font-weight:600;color:var(--amber);cursor:pointer;font-family:var(--sans)">🔒 Rezervováno</button>
+            <button onclick="admUpd(${lid},'sold')" style="background:rgba(255,85,0,.15);border:1px solid rgba(255,85,0,.4);border-radius:var(--r2);padding:8px 16px;font-size:12px;font-weight:600;color:var(--orange);cursor:pointer;font-family:var(--sans)">💰 Prodáno</button>
+            <button onclick="admUpd(${lid},'rejected')" style="background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.25);border-radius:var(--r2);padding:8px 16px;font-size:12px;font-weight:600;color:#f87171;cursor:pointer;font-family:var(--sans)">Skrýt</button>
+          `:''}
+          ${l.status==='reserved'?`
+            <span style="font-family:var(--mono);font-size:10px;color:#f59e0b;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);border-radius:var(--r2);padding:6px 10px">🔒 Čeká na platbu</span>
+            <button onclick="admUpd(${lid},'sold')" style="background:rgba(255,85,0,.15);border:1px solid rgba(255,85,0,.4);border-radius:var(--r2);padding:8px 16px;font-size:12px;font-weight:600;color:var(--orange);cursor:pointer;font-family:var(--sans)">💰 Platba přijata → Prodáno</button>
+            <button onclick="admUpd(${lid},'active')" style="background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.2);border-radius:var(--r2);padding:8px 16px;font-size:12px;font-weight:600;color:var(--green);cursor:pointer;font-family:var(--sans)">↩ Zrušit rezervaci</button>
+          `:''}
+          ${l.status==='rejected'?`
+            <button onclick="admUpd(${lid},'active')" style="background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);border-radius:var(--r2);padding:8px 16px;font-size:12px;font-weight:600;color:var(--green);cursor:pointer;font-family:var(--sans)">↩ Obnovit jako aktivní</button>
+            <button onclick="admUpd(${lid},'pending')" style="background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);border-radius:var(--r2);padding:8px 16px;font-size:12px;font-weight:600;color:var(--amber);cursor:pointer;font-family:var(--sans)">Vrátit do fronty</button>
+          `:''}
+          ${l.status==='sold'?`
+            <span style="font-family:var(--mono);font-size:10px;color:var(--orange);background:rgba(255,85,0,.08);border:1px solid rgba(255,85,0,.2);border-radius:var(--r2);padding:6px 10px">💰 Prodáno</span>
+            <button onclick="admUpd(${lid},'active')" style="background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);border-radius:var(--r2);padding:8px 16px;font-size:12px;font-weight:600;color:var(--green);cursor:pointer;font-family:var(--sans)">↩ Vrátit do nabídky</button>
+            <button onclick="admUpd(${lid},'reserved')" style="background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);border-radius:var(--r2);padding:8px 16px;font-size:12px;font-weight:600;color:var(--amber);cursor:pointer;font-family:var(--sans)">🔒 Vrátit jako rezervováno</button>
+          `:''}
+          <button onclick="admDel(${lid})" style="margin-left:auto;background:none;border:1px solid rgba(239,68,68,.2);border-radius:var(--r2);padding:7px 14px;font-size:11px;color:var(--g2);cursor:pointer;font-family:var(--sans)" onmouseover="this.style.color='#f87171';this.style.borderColor='rgba(239,68,68,.5)'" onmouseout="this.style.color='var(--g2)';this.style.borderColor='rgba(239,68,68,.2)'">🗑 Smazat</button>
+        </div>
+        <!-- Univerzální přepínač statusu (vždy viditelný) -->
+        <div style="display:flex;align-items:center;gap:6px;padding-top:8px;border-top:1px solid var(--border);flex-wrap:wrap">
+          <span style="font-family:var(--mono);font-size:9px;color:var(--g2);text-transform:uppercase;letter-spacing:.06em;margin-right:4px">Přepnout status:</span>
+          ${['pending','active','reserved','sold','rejected'].map(s=>s===l.status?'':`<button onclick="admUpd(${lid},'${s}')" style="background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:4px 10px;font-size:11px;color:var(--g1);cursor:pointer;font-family:var(--mono)" onmouseover="this.style.borderColor='var(--orange)';this.style.color='var(--white)'" onmouseout="this.style.borderColor='var(--border2)';this.style.color='var(--g1)'">${{pending:'⏳ Čeká',active:'✓ Nabídka',reserved:'🔒 Rezervováno',sold:'💰 Prodáno',rejected:'✗ Skryto'}[s]}</button>`).join('')}
+        </div>
       </div>
     </div>`;
 }
