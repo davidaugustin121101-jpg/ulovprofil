@@ -3910,24 +3910,41 @@ async function loadDash(){
     console.error('loadDash orders error',err);
     document.getElementById('ord-grid').innerHTML=`<div class="err-banner">⚠️ Nepodařilo se načíst nákupy.<button onclick="loadDash()">Zkusit znovu</button></div>`;
   }
-  // Notifikace pro prodejce — objednávky na moje inzeráty
+  // Notifikace pro prodejce — rezervace + prodeje
   try{
-    const{data:sellerNotifs,error:snErr}=await sb.from('admin_notifications')
-      .select('id,listing_id,platform,followers,niche,amount,transaction_vs,created_at,buyer_email,buyer_nickname')
-      .eq('seller_id',user.id)
-      .order('created_at',{ascending:false})
-      .limit(50);
+    const seenKey='seen_notifs_ts_'+user.id;
+    const seenTs=parseInt(localStorage.getItem(seenKey)||'0');
     const nl=document.getElementById('notif-list');
     const badge=document.getElementById('notif-badge');
     const mobDot=document.getElementById('mob-notif-dot');
     const markBtn=document.getElementById('btn-mark-read');
-    const seenKey='seen_notifs_ts_'+user.id;
-    const seenTs=parseInt(localStorage.getItem(seenKey)||'0');
-    if(snErr||!sellerNotifs||!sellerNotifs.length){
+    // 1) Notifikace z admin_notifications (nové rezervace + sold z DB)
+    const{data:dbNotifs}=await sb.from('admin_notifications')
+      .select('id,type,listing_id,platform,followers,niche,amount,transaction_vs,created_at,buyer_email,buyer_nickname')
+      .eq('seller_id',user.id)
+      .in('type',['new_order','listing_sold','listing_reserved'])
+      .order('created_at',{ascending:false})
+      .limit(50);
+    // 2) Fallback: prodané inzeráty které nemají notifikaci (starší záznamy)
+    const{data:soldListings}=await sb.from('listings')
+      .select('id,platform,followers,niche,price,updated_at')
+      .eq('user_id',user.id)
+      .eq('status','sold')
+      .order('updated_at',{ascending:false})
+      .limit(20);
+    const dbNotifListingIds=new Set((dbNotifs||[]).filter(n=>n.type==='listing_sold'||n.type==='new_order').map(n=>n.listing_id));
+    const soldFallback=(soldListings||[])
+      .filter(l=>!dbNotifListingIds.has(l.id))
+      .map(l=>({id:'sold_'+l.id,type:'listing_sold',listing_id:l.id,platform:l.platform,followers:l.followers,niche:l.niche,amount:l.price,created_at:l.updated_at,_fallback:true}));
+    // Merge a seřaď
+    const allNotifs=[...(dbNotifs||[]),...soldFallback]
+      .sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
+    if(!allNotifs.length){
       nl.innerHTML=`<div class="empty"><div class="ei">🔔</div><div class="et">Žádné notifikace</div><div class="ed">Zobrazí se, jakmile někdo projeví zájem o tvůj inzerát.</div></div>`;
-      badge.classList.add('h'); mobDot.classList.add('h');
+      badge.classList.add('h');mobDot.classList.add('h');
+      if(markBtn) markBtn.style.display='none';
     } else {
-      const unreadCount=sellerNotifs.filter(n=>new Date(n.created_at).getTime()>seenTs).length;
+      const unreadCount=allNotifs.filter(n=>new Date(n.created_at).getTime()>seenTs).length;
       if(unreadCount>0){
         badge.textContent=unreadCount;badge.classList.remove('h');
         mobDot.classList.remove('h');
@@ -3936,20 +3953,34 @@ async function loadDash(){
         badge.classList.add('h');mobDot.classList.add('h');
         if(markBtn) markBtn.style.display='none';
       }
-      nl.innerHTML=sellerNotifs.map(n=>{
+      nl.innerHTML=allNotifs.map(n=>{
         const isUnread=new Date(n.created_at).getTime()>seenTs;
         const dt=n.created_at?new Date(n.created_at).toLocaleString('cs-CZ'):'';
-        const buyer=n.buyer_nickname||n.buyer_email||'Kupující';
-        return `<div class="notif-item${isUnread?' unread':''}">
-          <div class="notif-icon">${isUnread?'🔔':'📋'}</div>
-          <div class="notif-body">
-            <div class="notif-title">🔒 Tvůj inzerát byl rezervován</div>
-            <div style="font-size:13px;color:var(--g1);margin:5px 0 6px">${esc(n.platform||'—')} · ${esc(String(n.followers||'—'))} · ${esc(n.niche||'—')}</div>
-            <div style="font-size:12px;color:var(--g2);line-height:1.6">Kupující <strong style="color:var(--white)">${esc(buyer)}</strong> potvrdil zájem a čeká se na připsání platby ${n.amount?'<strong style="color:var(--orange)">'+fp(n.amount)+' Kč</strong>':''} na účet UlovProfil.<br>VS: <span style="font-family:var(--mono);color:var(--orange)">${esc(n.transaction_vs||'—')}</span></div>
-            <div class="notif-meta" style="margin-top:6px">${dt}</div>
-          </div>
-          ${isUnread?'<div class="notif-dot" title="Nepřečteno"></div>':''}
-        </div>`;
+        const isSold=n.type==='listing_sold';
+        const buyer=n.buyer_nickname||n.buyer_email||null;
+        if(isSold){
+          return `<div class="notif-item${isUnread?' unread':''}" style="${isUnread?'border-color:rgba(34,197,94,.4);background:rgba(34,197,94,.04)':''}">
+            <div class="notif-icon green">${isUnread?'🎉':'✅'}</div>
+            <div class="notif-body">
+              <div class="notif-title" style="color:var(--green)">✅ Tvůj inzerát byl prodán!</div>
+              <div style="font-size:13px;color:var(--g1);margin:5px 0 6px">${esc(n.platform||'—')} · ${esc(String(n.followers||'—'))} · ${esc(n.niche||'—')}</div>
+              <div style="font-size:12px;color:var(--g2);line-height:1.6">Platba byla přijata${n.amount?` — obdržíš <strong style="color:var(--green)">${fp(n.amount)} Kč</strong>`:''} po potvrzení předání přístupů. Kontaktujeme tě ohledně dalšího postupu.</div>
+              <div class="notif-meta" style="margin-top:6px">${dt}</div>
+            </div>
+            ${isUnread?'<div class="notif-dot" style="background:var(--green)" title="Nepřečteno"></div>':''}
+          </div>`;
+        } else {
+          return `<div class="notif-item${isUnread?' unread':''}">
+            <div class="notif-icon">${isUnread?'🔔':'📋'}</div>
+            <div class="notif-body">
+              <div class="notif-title">🔒 Tvůj inzerát byl rezervován</div>
+              <div style="font-size:13px;color:var(--g1);margin:5px 0 6px">${esc(n.platform||'—')} · ${esc(String(n.followers||'—'))} · ${esc(n.niche||'—')}</div>
+              <div style="font-size:12px;color:var(--g2);line-height:1.6">${buyer?`Kupující <strong style="color:var(--white)">${esc(buyer)}</strong> potvrdil zájem a `:''}Čeká se na připsání platby${n.amount?` <strong style="color:var(--orange)">${fp(n.amount)} Kč</strong>`:''} na účet UlovProfil.${n.transaction_vs?`<br>VS: <span style="font-family:var(--mono);color:var(--orange)">${esc(n.transaction_vs)}</span>`:''}</div>
+              <div class="notif-meta" style="margin-top:6px">${dt}</div>
+            </div>
+            ${isUnread?'<div class="notif-dot" title="Nepřečteno"></div>':''}
+          </div>`;
+        }
       }).join('');
     }
   }catch(err){
@@ -5581,6 +5612,29 @@ async function admMarkListingSold(listingId, notifId){
   if(!confirm('Opravdu označit inzerát #'+listingId+' jako PRODÁNO?'))return;
   await sb.from('listings').update({status:'sold'}).eq('id',listingId);
   if(notifId) await sb.from('admin_notifications').update({is_read:true}).eq('id',notifId);
+  // Ulož sold notifikaci pro prodejce
+  try{
+    const listing=admAllL.find(l=>l.id===listingId);
+    if(listing){
+      await sb.from('admin_notifications').insert({
+        type:'listing_sold',
+        listing_id: listing.id,
+        platform: listing.platform,
+        followers: listing.followers,
+        niche: listing.niche,
+        seller_id: listing.user_id,
+        seller_email: listing.seller_email,
+        amount: listing.price,
+        created_at: new Date().toISOString(),
+        is_read: false
+      });
+      await fetch('/api/seller-notification',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({seller_email:listing.seller_email,status:'sold',platform:listing.platform,followers:listing.followers,niche:listing.niche,listing_id:listing.id})
+      }).catch(e=>console.warn('Seller email error:',e));
+    }
+  }catch(e){console.warn('admMarkListingSold notify:',e);}
   toast('Inzerát označen jako PRODÁNO ✅','success');
   loadAdmin();loadPub();loadAdminOrders();
 }
@@ -5789,6 +5843,19 @@ async function admUpd(id,status){
           method:'POST',
           headers:{'Content-Type':'application/json'},
           body:JSON.stringify({seller_email:listing.seller_email,status,platform:listing.platform,followers:listing.followers,niche:listing.niche,listing_id:listing.id})
+        });
+        // Ulož notifikaci do DB pro in-app zobrazení prodejci
+        await sb.from('admin_notifications').insert({
+          type: status==='sold'?'listing_sold':'listing_reserved',
+          listing_id: listing.id,
+          platform: listing.platform,
+          followers: listing.followers,
+          niche: listing.niche,
+          seller_id: listing.user_id,
+          seller_email: listing.seller_email,
+          amount: status==='sold'?listing.price:null,
+          created_at: new Date().toISOString(),
+          is_read: false
         });
       }
     }catch(e){console.warn('Seller notify:',e);}
