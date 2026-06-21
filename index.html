@@ -2838,6 +2838,42 @@ function setNavU(u){
       if(badge&&count>0){badge.textContent=count;badge.style.display='inline';}
     });
   }
+  // ── Realtime: live notifikace pro zvoneček ──
+  startNotifRealtime(u.id);
+}
+
+let _notifChannel=null;
+function startNotifRealtime(userId){
+  if(_notifChannel){try{sb.removeChannel(_notifChannel);}catch(e){}}
+  _notifChannel=sb.channel('user-notifs-'+userId)
+    .on('postgres_changes',{
+      event:'INSERT',
+      schema:'public',
+      table:'admin_notifications',
+      filter:'seller_id=eq.'+userId
+    },payload=>{
+      const seenKey='seen_notifs_ts_'+userId;
+      const seenTs=parseInt(localStorage.getItem(seenKey)||'0');
+      const created=payload.new?.created_at;
+      if(!created||new Date(created).getTime()<=seenTs) return;
+      // Aktualizuj badge v navbaru
+      const bellBadge=document.getElementById('nav-bell-badge');
+      const sideBarBadge=document.getElementById('notif-badge');
+      const mobDot=document.getElementById('mob-notif-dot');
+      const cur=parseInt(bellBadge?.textContent||'0')||0;
+      const newCount=cur+1;
+      if(bellBadge){bellBadge.textContent=newCount;bellBadge.classList.remove('h');}
+      if(sideBarBadge){sideBarBadge.textContent=newCount;sideBarBadge.classList.remove('h');}
+      if(mobDot) mobDot.classList.remove('h');
+      // Toast s kliknutím na notifikace
+      const isSold=payload.new?.type==='listing_sold';
+      const platform=payload.new?.platform||'inzerát';
+      const msg=isSold
+        ?`✅ Tvůj ${platform} inzerát byl prodán!`
+        :`🔔 Tvůj ${platform} inzerát byl rezervován`;
+      toast(msg+' — <u style="cursor:pointer" onclick="goNotifications()">Zobrazit</u>','success',6000);
+    })
+    .subscribe();
 }
 function setNavG(){
   document.getElementById('nav-guest').style.display='';
@@ -5620,8 +5656,9 @@ function renderAdminOrders(list){
       <div style="padding:10px 16px;border-top:1px solid var(--border);display:flex;align-items:center;gap:12px;flex-wrap:wrap">
         <span style="font-size:12px;color:var(--g2)">Inzerát: <strong style="color:var(--white)">${esc(n.platform||'—')} · ${esc(n.followers||'—')} · ${esc(n.niche||'—')}</strong></span>
         <span style="font-family:var(--mono);font-size:11px;color:var(--g2)">#${n.listing_id||'—'}</span>
-        <div style="margin-left:auto;display:flex;gap:8px">
+        <div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap">
           <button onclick="admMarkListingReserved(${n.listing_id})" style="background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.4);border-radius:var(--r2);padding:6px 14px;font-size:12px;font-weight:600;color:var(--amber);cursor:pointer;font-family:var(--sans)">🔒 Rezervováno</button>
+          <button onclick="admCancelReservation(${n.listing_id})" style="background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.25);border-radius:var(--r2);padding:6px 14px;font-size:12px;font-weight:600;color:var(--green);cursor:pointer;font-family:var(--sans)">↩ Zrušit rezervaci</button>
           <button onclick="admMarkListingSold(${n.listing_id},${n.id})" style="background:rgba(255,85,0,.15);border:1px solid rgba(255,85,0,.4);border-radius:var(--r2);padding:6px 14px;font-size:12px;font-weight:600;color:var(--orange);cursor:pointer;font-family:var(--sans)">✅ Prodáno</button>
         </div>
       </div>
@@ -5646,6 +5683,15 @@ async function admMarkListingReserved(listingId){
   await sb.from('listings').update({status:'reserved'}).eq('id',listingId);
   toast('Inzerát označen jako REZERVOVÁNO 🔒','success');
   loadAdmin();loadPub();
+}
+
+async function admCancelReservation(listingId){
+  if(!listingId){toast('Chybí ID inzerátu','error');return;}
+  if(!confirm('Zrušit rezervaci a vrátit inzerát zpět do prodeje?'))return;
+  const{error}=await sb.from('listings').update({status:'active'}).eq('id',listingId);
+  if(error){toast('Chyba: '+error.message,'error');return;}
+  toast('Rezervace zrušena — inzerát je zpět v prodeji ✅','success');
+  loadAdmin();loadPub();loadAdminOrders();
 }
 
 async function admMarkListingSold(listingId, notifId){
@@ -5942,11 +5988,13 @@ function stC(s){const m={pending:'st-p',active:'st-a',sold:'st-s',rejected:'st-r
 function stL(s){const m={pending:'⏳ Čeká',active:'✓ Aktivní',sold:'✓ Prodáno',rejected:'✗ Zamítnuto',reserved:'🔒 Rezervováno'};return m[s]||s;}
 function fp(p){return parseInt(p).toLocaleString('cs-CZ');}
 function showMsg(el,msg){el.textContent=msg;el.classList.remove('h');}
-function toast(msg,type='success'){
+function toast(msg,type='success',duration=3500){
   const t=document.getElementById('toast');
-  document.getElementById('tmsg').textContent=msg;
+  const el=document.getElementById('tmsg');
+  if(/<[a-z]/i.test(msg)){el.innerHTML=msg;}else{el.textContent=msg;}
   t.className='toast '+type+' show';
-  setTimeout(()=>t.classList.remove('show'),3500);
+  clearTimeout(t._to);
+  t._to=setTimeout(()=>t.classList.remove('show'),duration);
 }
 
 // MOBILE NAV
