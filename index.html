@@ -2753,12 +2753,18 @@ async function init(){
         const pavOut=document.getElementById('pav');if(pavOut)pavOut.style.display='';
         const profName=document.getElementById('prof-name');if(profName)profName.value='';
         const profEmail=document.getElementById('prof-email-disp');if(profEmail)profEmail.value='';
+        // #region agent log H-A fix – re-render marketplace bez starých Upravit tlačítek
+        if(allL&&allL.length) try{renderPub(allL);}catch(e){}
+        // #endregion
         return;
       }
       // SIGNED_IN, INITIAL_SESSION, USER_UPDATED, MFA_CHALLENGE_VERIFIED
       user=s?.user||null;
       // #region agent log H-D
       fetch('http://127.0.0.1:7711/ingest/3cd4d8f4-c62c-4feb-9280-e257beb22e7d',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'26f563'},body:JSON.stringify({sessionId:'26f563',location:'onAuthStateChange:SIGNED_IN',message:'event',data:{event,userId:user?.id||null,email:user?.email?.slice(0,4)+'***'||null},timestamp:Date.now(),hypothesisId:'H-D'})}).catch(()=>{});
+      // #endregion
+      // #region agent log H-A fix – re-render marketplace s novým user kontextem
+      if(allL&&allL.length) try{renderPub(allL);}catch(e){}
       // #endregion
       if(user){
         try{setNavU(user);}catch(e){console.warn('setNavU',e);}
@@ -2988,6 +2994,12 @@ async function doLogin(){
   // Použij e-mail přímo z odpovědi — user globální proměnná ještě nemusí být nastavená
   const loggedEmail=data?.user?.email||e;
   user=data?.user||null;
+  // #region agent log H-B – zaznamenat user.id ihned po login před go('dashboard')
+  try{localStorage.setItem('dbg_loginUser',JSON.stringify({userId:user?.id,email:user?.email,ts:new Date().toISOString()}));}catch(e){}
+  // #endregion
+  // #region agent log H-A fix – re-render marketplace s novým user kontextem ihned po login
+  if(allL&&allL.length) try{renderPub(allL);}catch(e){}
+  // #endregion
   try{if(user) setNavU(user);}catch(e){console.warn('setNavU error',e);}
   try{if(user) startNotifRealtime(user.id);}catch(e){console.warn('realtime init error',e);}
   toast('Přihlášení úspěšné 👋','success');
@@ -3870,6 +3882,9 @@ async function loadDash(){
   if(!user)return;
   // #region agent log H-D/H-E
   fetch('http://127.0.0.1:7711/ingest/3cd4d8f4-c62c-4feb-9280-e257beb22e7d',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'26f563'},body:JSON.stringify({sessionId:'26f563',location:'loadDash:entry',message:'called',data:{userId:user?.id||null,email:user?.email?.slice(0,4)+'***'||null},timestamp:Date.now(),hypothesisId:'H-D'})}).catch(()=>{});
+  // #endregion
+  // #region agent log H-B – uložení do localStorage pro debugování account switching
+  try{localStorage.setItem('dbg_loadDash',JSON.stringify({userId:user?.id,email:user?.email,ts:new Date().toISOString()}));}catch(e){}
   // #endregion
   // Okamžitě vymaž stará data aby neprobliklo předchozí session
   document.getElementById('my-grid').innerHTML='<div class="empty"><div class="ei">⏳</div><div class="et">Načítám…</div></div>';
